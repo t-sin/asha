@@ -2,5 +2,5 @@
   (:use #:cl)
   (:import-from #:asha/shtml
                 #:make-element*
-                #:render-shtml))
+                #:render-element))
 (in-package #:asha)
