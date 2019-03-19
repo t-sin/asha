@@ -46,7 +46,7 @@
                                          :collect (if (listp c) (make-element* c) c))))))))
 
 ;; https://developer.mozilla.org/en-US/docs/Glossary/Empty_element
-(defconstant +empty-elements+
+(defvar +empty-elements+
   '(:area :base :br :col :embed :hr :img :input :link :meta :param :source :track :wbr))
 
 (defun render-shtml-element (e params indent)
