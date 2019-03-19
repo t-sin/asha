@@ -58,7 +58,7 @@
   (unless (member (element-name e) +empty-elements+)
     (format *standard-output* "~vt</~(~a~)>~%" indent (element-name e))))
 
-(defun render-element (e params &optional (indent 0))
+(defun render-element (e &optional params (indent 0))
   (typecase e
     (string (format *standard-output* "~vt~a~%" (+ indent 2) e))
     (element (render-shtml-element e params indent))
