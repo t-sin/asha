@@ -21,20 +21,19 @@
         (t (first shtml))))
 
 (defun get-props (shtml-rest)
-  (let ((props))
-    (loop
-      :for (k v . rest) :on shtml-rest :by #'cddr
-      :do (cond ((and (keywordp k) (stringp v))
-                 (progn
-                   (push v props)
-                   (push k props)))
-                ((keywordp k)
-                 (error (format nil "value ~s should be a string." v)))
-                (t (return-from get-props
-                     (values props (if (null v)
-                                       (list k)
-                                       (cons k (cons v rest))))))))
-    (values props nil)))
+  (loop
+    :for (k v . rest) :on shtml-rest :by #'cddr
+    :with props := nil
+    :do (cond ((and (keywordp k) (stringp v))
+               (progn
+                 (push v props)
+                 (push k props)))
+              ((keywordp k)
+               (error (format nil "value ~s should be a string." v)))
+              (t (return  (values props (if (null v)
+                                            (list k)
+                                            (cons k (cons v rest)))))))
+    :finally (return (values props nil))))
 
 (defun make-element* (e)
   (cond ((null e)
