@@ -11,10 +11,14 @@
 (defstruct element
   name props children)
 
-(defun check-name (name)
-  (if (not (keywordp name))
-      (error "first element of shtml must be a keyword.")
-      name))
+(defun check-name (shtml)
+  (cond ((not (listp shtml))
+         (error "SHTML should be a list."))
+        ((zerop (length shtml))
+         (error "empty list is not SHTML."))
+        ((not (keywordp (first shtml)))
+         (error "first element of shtml must be a keyword."))
+        (t (first shtml))))
 
 (defun get-props (shtml-rest)
   (let ((props))
@@ -36,7 +40,7 @@
   (cond ((null e)
          (error "shtml must have its name."))
         ((functionp e) e)
-        (t (let ((name (check-name (first e))))
+        (t (let ((name (check-name e)))
              (multiple-value-bind (props children)
                  (get-props (rest e))
                (make-element :name name
