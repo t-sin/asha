@@ -53,17 +53,17 @@
   '(:area :base :br :col :embed :hr :img :input :link :meta :param :source :track :wbr))
 
 (defun render-shtml-element (e params indent)
-  (format *standard-output* "~vt<~(~a~)~{~^ ~(~a~)=\"~a\"~}>~%" indent
+  (format *standard-output* "~v,0t<~(~a~)~{~^ ~(~a~)=\"~a\"~}>~%" indent
           (element-name e) (element-props e))
   (loop
     :for c :in (element-children e)
     :do (render-element c params (+ indent 2)))
   (unless (member (element-name e) +empty-elements+)
-    (format *standard-output* "~vt</~(~a~)>~%" indent (element-name e))))
+    (format *standard-output* "~v,0t</~(~a~)>~%" indent (element-name e))))
 
 (defun render-element (e &optional params (indent 0))
   (typecase e
-    (string (format *standard-output* "~vt~a~%" (+ indent 2) e))
+    (string (format *standard-output* "~v,0t~a~%" (+ indent 2) e))
     (element (render-shtml-element e params indent))
     (function (render-shtml-element (make-element* (funcall e params)) params indent))
     (t (error "it's not a shtml element: ~s." e))))
