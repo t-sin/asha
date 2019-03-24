@@ -1,6 +1,12 @@
 (defpackage #:asha/page
   (:use #:cl)
-  (:export))
+  (:export #:page
+           #:page-title
+           #:page-created-at
+           #:page-tags
+           #:body
+           #:make-page*
+           #:list-shtml-files))
 (in-package #:asha/page)
 
 (defstruct page
