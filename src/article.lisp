@@ -9,9 +9,10 @@
            #:article-tags
            #:article-title
            #:article-body
+           #:init-article-set
            #:load-article-set
            #:save-article-set
-           #:add-article))
+           #:add-article*))
 (in-package #:asha/article)
 
 (defparameter *project-root-pathname* (truename "."))
@@ -36,8 +37,13 @@
                 :pages (article-set-pages o)
                 :articles (article-set-articles o))))
 
+(defun init-article-set (set-name)
+  (make-article-set :meta (list :name set-name)
+                    :pages '((:name "index"))
+                    :articles nil))
+
 (defun load-article-set-state (set-name)
-  (let* ((basepath (merge-pathnames (make-pathname :directory (list :relative set-name))
+  (let* ((basepath (merge-pathnames (make-pathname :directory `(:relative ,set-name))
                                     *project-root-pathname*))
          (state-file (merge-pathnames (make-pathname :name ".articles") basepath)))
     (if (not (probe-file state-file))
@@ -70,7 +76,7 @@
       :with articles := nil
       :do (let* ((name (getf article :name))
                  (path (merge-pathnames (make-pathname :name name :type "shtml")
-                                        (merge-pathnames (make-pathname :directory (list :relative set-name))
+                                        (merge-pathnames (make-pathname :directory `(:relative ,set-name))
                                                          *project-root-pathname*))))
             (if (not (probe-file path))
                 (error "file '~s' not found. .articles file may be broken." path)
@@ -85,11 +91,40 @@
       :finally (setf (article-set-articles state) (nreverse articles)))
     state))
 
-(defun add-article (article aset &optional (update nil))
-  (when update
+(defun add-article (article aset &optional (update-p nil))
+  (when update-p
     (setf (article-created-at article) (now)))
-  (setf (article-set-articles aset)
-        (sort (cons article (article-set-articles aset))
-              (lambda (a1 a2) (string< (article-created-at a1)
-                                       (article-created-at a2)))))
+  (let ((pos (position article (article-set-articles aset)
+                       :test (lambda (a1 a2) (string= (article-name a1) (article-name a2))))))
+    (if pos
+        (setf (nth pos (article-set-articles aset)) article)
+        (push article (article-set-articles aset)))
+    (setf (article-set-articles aset)
+          (sort (article-set-articles aset)
+                (lambda (a1 a2) (string< (article-created-at a1)
+                                         (article-created-at a2))))))
   aset)
+
+(defun add-article* (article-path aset &optional (update-p nil))
+  (if (not (probe-file article-path))
+      (error "file '~s' does not exist." article-path)
+      (let* ((asname (getf (article-set-meta aset) :name))
+             (apath (merge-pathnames (make-pathname :name (pathname-name article-path)
+                                                    :type "shtml")
+                                     (merge-pathnames (make-pathname :directory `(:relative ,asname))
+                                                      *project-root-pathname*))))
+        (with-open-file (in article-path :direction :input)
+          (let ((a (read in)))
+            (with-open-file (out apath :direction :output :if-exists :supersede)
+              (print a out))
+            (add-article (make-article :name (pathname-name article-path)
+                                       :created-at (let ((prev-a (find (pathname-name article-path)
+                                                                       (article-set-articles aset)
+                                                                       :key #'article-created-at
+                                                                       :test #'string=)))
+                                                     (if prev-a (article-created-at prev-a) (now)))
+                                       :tags (getf a :tags)
+                                       :title (getf a :title)
+                                       :body (getf a :body))
+                         aset update-p)
+            (save-article-set aset))))))
