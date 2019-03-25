@@ -28,6 +28,21 @@
                :body (getf plist :body)
                :created-at (created-at plist))))
 
-(defun list-sthml-files (dirname)
-  (uiop:directory-files (make-pathname :directory dirname)
+(defun list-sthml-files (dirpath)
+  (uiop:directory-files dirpath
                         (make-pathname :directory nil :name :wild :type "shtml")))
+
+(defun load-page-groups (rootpath dirname)
+  (let* ((dirpath (merge-pathnames (make-pathname :directory (list :relative dirname))
+                                   rootpath))
+         (state-file (merge-pathnames (make-pathname :name ".state") dirpath))
+         (shtmls (list-sthml-files dirpath)))
+    (unless (probe-file state-file)
+      (error (format nil "state file ~s does not exist." state-file)))
+    (values (loop
+              :for shtml :in shtmls
+              :nconc (list (pathname-name shtml)
+                           (with-open-file (in shtml :direction :input)
+                             (make-page* in))))
+            (with-open-file (in state-file :direction :input)
+              (read in)))))
