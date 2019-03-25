@@ -10,6 +10,7 @@
            #:article-title
            #:article-body
            #:load-article-set
+           #:save-article-set
            #:add-article))
 (in-package #:asha/article)
 
@@ -46,6 +47,21 @@
             (make-article-set :meta (getf aset :meta)
                               :pages (getf aset :pages)
                               :articles (getf aset :articles)))))))
+
+(defun save-article-set (aset)
+  (let* ((name (getf (article-set-meta aset) :name))
+         (basepath (merge-pathnames (make-pathname :directory (list :relative name))
+                                    *project-root-pathname*))
+         (state-file (merge-pathnames (make-pathname :name ".articles") basepath)))
+    (with-open-file (out state-file :direction :output
+                         :if-exists :supersede)
+      (format out "~s" (list :meta (article-set-meta aset)
+                             :pages (article-set-pages aset)
+                             :articles (mapcar (lambda (a)
+                                                 (list :name (article-name a)
+                                                       :created-at (article-created-at a)))
+                                               (article-set-articles aset))))
+      t)))
 
 (defun load-article-set (set-name)
   (let ((state (load-article-set-state set-name)))

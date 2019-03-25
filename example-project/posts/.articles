@@ -1,4 +1,3 @@
-(:meta (:name "posts")
- :pages ((:name "index") (:name "tags"))
- :articles ((:name "static-site-generator" :created-at "2019-03-25T10:39:18")
-            (:name "test" :created-at "2019-03-20T10:00:00")))
+(:META (:NAME "posts") :PAGES ((:NAME "index") (:NAME "tags")) :ARTICLES
+ ((:NAME "test" :CREATED-AT "2019-03-20T10:00:00") (:NAME "static-site-generator" :CREATED-AT "2019-03-25T10:39:18")
+  (:NAME "hoge" :CREATED-AT "2019-03-26T00:19:01")))
