@@ -5,6 +5,8 @@
                 #:render-element)
   (:import-from #:asha/article
                 #:make-article
+                #:init-article-set
                 #:load-article-set
-                #:add-article))
+                #:save-article-set
+                #:add-article*))
 (in-package #:asha)
