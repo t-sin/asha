@@ -3,5 +3,6 @@
   :author "TANAKA Shinichi"
   :components ((:file "asha" :depends-on ("src"))
                (:module "src"
-                 :components ((:file "shtml"))
+                 :components ((:file "shtml")
+                              (:file "page"))
                  :serial t)))
