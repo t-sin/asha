@@ -40,7 +40,7 @@
 (defstruct article-set
   meta template pages articles)
 
-(defun article-set-plist (as)
+(defun article-set->plist (as)
   (list :meta (article-set-meta as)
         :template (article-set-template as)
         :pages (article-set-pages as)
