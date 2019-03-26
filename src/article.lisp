@@ -59,6 +59,7 @@
          (basepath (merge-pathnames (make-pathname :directory (list :relative name))
                                     *project-root-pathname*))
          (state-file (merge-pathnames (make-pathname :name ".articles") basepath)))
+    (ensure-directories-exist basepath)
     (with-open-file (out state-file :direction :output
                          :if-exists :supersede)
       (format out "~s" (list :meta (article-set-meta aset)
