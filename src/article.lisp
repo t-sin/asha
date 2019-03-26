@@ -9,10 +9,12 @@
            #:article-tags
            #:article-title
            #:article-body
+           #:article->plist
            #:article-set-meta
            #:article-set-template
            #:article-set-pages
            #:article-set-articles
+           #:article-set->plist
            #:init-article-set
            #:load-article-set
            #:save-article-set
@@ -24,23 +26,28 @@
 (defstruct article
   name created-at tags title body)
 
+(defun article->plist (a)
+  (list :name (article-name a)
+        :created-at (article-created-at a)
+        :tags (article-tags a)
+        :title (article-title a)
+        :body (article-body a)))
+
 (defmethod print-object ((o article) stream)
-  (format stream "~s"
-          (list :name (article-name o)
-                :created-at (article-created-at o)
-                :tags (article-tags o)
-                :title (article-title o)
-                :body (article-body o))))
+  (format stream "~s" (article->plist o)))
+
 
 (defstruct article-set
   meta template pages articles)
 
+(defun article-set-plist (as)
+  (list :meta (article-set-meta as)
+        :template (article-set-template as)
+        :pages (article-set-pages as)
+        :articles (article-set-articles as)))
+
 (defmethod print-object ((o article-set) stream)
-  (format stream "~s"
-          (list :meta (article-set-meta o)
-                :template "template"
-                :pages (article-set-pages o)
-                :articles (article-set-articles o))))
+  (format stream "~s" (article-set->plist o)))
 
 (defun init-article-set (set-name)
   (make-article-set :meta (list :name set-name)
