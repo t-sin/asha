@@ -10,6 +10,8 @@
                 #:make-article
                 #:article-name
                 #:article-set-meta
+                #:article-set-template
+                #:article-set-pages
                 #:article-set-articles
                 #:article-created-at
                 #:init-article-set

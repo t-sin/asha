@@ -9,7 +9,10 @@
            #:article-tags
            #:article-title
            #:article-body
+           #:article-set-meta
            #:article-set-template
+           #:article-set-pages
+           #:article-set-articles
            #:init-article-set
            #:load-article-set
            #:save-article-set
