@@ -9,6 +9,7 @@
            #:article-tags
            #:article-title
            #:article-body
+           #:article-set-template
            #:init-article-set
            #:load-article-set
            #:save-article-set
@@ -29,18 +30,19 @@
                 :body (article-body o))))
 
 (defstruct article-set
-  meta pages articles)
+  meta template pages articles)
 
 (defmethod print-object ((o article-set) stream)
   (format stream "~s"
           (list :meta (article-set-meta o)
+                :template "template"
                 :pages (article-set-pages o)
                 :articles (article-set-articles o))))
 
 (defun init-article-set (set-name)
   (make-article-set :meta (list :name set-name)
-                    :pages '((:name "index"))
                     :template "template"
+                    :pages '((:name "index"))
                     :articles nil))
 
 (defun load-article-set-state (set-name)
@@ -52,6 +54,7 @@
         (with-open-file (in state-file :direction :input)
           (let ((aset (read in)))
             (make-article-set :meta (getf aset :meta)
+                              :template (getf aset :template)
                               :pages (getf aset :pages)
                               :articles (getf aset :articles)))))))
 
@@ -64,6 +67,7 @@
     (with-open-file (out state-file :direction :output
                          :if-exists :supersede)
       (format out "~s" (list :meta (article-set-meta aset)
+                             :template (article-set-template aset)
                              :pages (article-set-pages aset)
                              :articles (mapcar (lambda (a)
                                                  (list :name (article-name a)
