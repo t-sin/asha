@@ -8,6 +8,7 @@
   (:import-from #:asha/article
                 #:*project-root-pathname*
                 #:make-article
+                #:article-name
                 #:article-set-meta
                 #:article-set-articles
                 #:article-created-at
@@ -34,7 +35,7 @@
       (print article out))
     (add-article (make-article :name aname
                                :created-at (let ((prev-a (find aname (article-set-articles aset)
-                                                               :key #'article-created-at
+                                                               :key #'article-name
                                                                :test #'string=)))
                                              (if prev-a (article-created-at prev-a) (now)))
                                :tags (getf article :tags)
