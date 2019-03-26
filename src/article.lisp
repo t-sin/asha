@@ -39,7 +39,7 @@
 
 (defun init-article-set (set-name)
   (make-article-set :meta (list :name set-name)
-                    :pages '((:name "index"))
+                    :pages '((:name "index") (:name "template"))
                     :articles nil))
 
 (defun load-article-set-state (set-name)
