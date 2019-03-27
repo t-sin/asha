@@ -1,7 +1,8 @@
 (defpackage #:asha/article
   (:use #:cl)
   (:import-from #:asha/util
-                #:now)
+                #:now
+                #:merge-pathnames*)
   (:export #:*project-root-pathname*
            #:make-article
            #:article-name
@@ -91,9 +92,9 @@
       :for article :in (article-set-articles state)
       :with articles := nil
       :do (let* ((name (getf article :name))
-                 (path (merge-pathnames (make-pathname :name name :type "shtml")
-                                        (merge-pathnames (make-pathname :directory `(:relative ,set-name))
-                                                         *project-root-pathname*))))
+                 (path (merge-pathnames* (make-pathname :name name :type "shtml")
+                                         (make-pathname :directory `(:relative ,set-name))
+                                         *project-root-pathname*)))
             (if (not (probe-file path))
                 (error "file '~s' not found. .articles file may be broken." path)
                 (with-open-file (in path :direction :input)

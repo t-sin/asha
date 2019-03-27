@@ -1,7 +1,8 @@
 (defpackage #:asha
   (:use #:cl)
   (:import-from #:asha/util
-                #:now)
+                #:now
+                #:merge-pathnames*)
   (:import-from #:asha/shtml
                 #:make-element*
                 #:render-element)
@@ -37,10 +38,10 @@
 (defun new-post% (article aset &optional (update-p nil))
   (let* ((aname (getf article :name))
          (asname (getf (article-set-meta aset) :name))
-         (apath (merge-pathnames (make-pathname :name aname
+         (apath (merge-pathnames* (make-pathname :name aname
                                                 :type "shtml")
-                                 (merge-pathnames (make-pathname :directory `(:relative ,asname))
-                                                  *project-root-pathname*))))
+                                  (make-pathname :directory `(:relative ,asname))
+                                  *project-root-pathname*)))
     (with-open-file (out apath :direction :output :if-exists :supersede)
       (print article out))
     (add-article (make-article :name aname
@@ -66,7 +67,7 @@
       (t (error "article should be one of plist or pathname.")))))
 
 (defun render-blog (aset rootpath outpath)
-  (uiop:delete-directory-tree outpath :validate t)
+  (uiop:delete-directory-tree outpath :validate t :if-does-not-exist :ignore)
   (ensure-directories-exist outpath)
   (let* ((meta (article-set-meta aset))
          (asetpath (make-pathname :directory `(:relative ,(getf meta :name))))
@@ -80,9 +81,9 @@
          (articles (mapcar #'article->plist (article-set-articles aset))))
     (loop
       :for a :in articles
-      :for path := (merge-pathnames (make-pathname :name (getf a :name)
+      :for path := (merge-pathnames* (make-pathname :name (getf a :name)
                                                    :type "html")
-                                    (merge-pathnames asetpath outpath))
+                                     asetpath outpath)
       :for params := `(:aset-meta ,meta
                        :path ,(pathname-directory path)
                       ,@a)
