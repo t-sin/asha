@@ -66,6 +66,7 @@
       (t (error "article should be one of plist or pathname.")))))
 
 (defun render-blog (aset rootpath outpath)
+  (uiop:delete-directory-tree outpath :validate t)
   (ensure-directories-exist outpath)
   (let* ((meta (article-set-meta aset))
          (asetpath (make-pathname :directory `(:relative ,(getf meta :name))))
