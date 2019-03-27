@@ -78,7 +78,6 @@
                      (eval (read in))))
          (pages (article-set-pages aset))
          (articles (mapcar #'article->plist (article-set-articles aset))))
-    (print template)
     (loop
       :for a :in articles
       :for path := (merge-pathnames (make-pathname :name (getf a :name)
