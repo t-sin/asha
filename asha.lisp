@@ -66,32 +66,22 @@
                     (new-post% (read in) aset update-p))))
       (t (error "article should be one of plist or pathname.")))))
 
-(defun render-blog (aset rootpath outpath)
-  (uiop:delete-directory-tree outpath :validate t :if-does-not-exist :ignore)
-  (ensure-directories-exist outpath)
-  (let* ((meta (article-set-meta aset))
-         (asetpath (make-pathname :directory `(:relative ,(getf meta :name))))
-         (template% (article-set-template aset))
-         (template (with-open-file (in (merge-pathnames (make-pathname :name template%
-                                                                       :type "shtml")
-                                                        rootpath)
-                                       :direction :input)
-                     (eval (read in))))
-         (pages (article-set-pages aset))
-         (articles (mapcar #'article->plist (article-set-articles aset))))
-    (loop
-      :for a :in articles
-      :for path := (merge-pathnames* (make-pathname :name (getf a :name)
-                                                   :type "html")
-                                     asetpath outpath)
-      :for params := `(:aset-meta ,meta
-                       :path ,(pathname-directory path)
-                      ,@a)
-      :do (ensure-directories-exist path)
-      :do (with-open-file (out path :direction :output)
-            (let ((*standard-output* out))
-              (render-element template params))))
-    (loop
+(defun render-articles% (articles template meta asetpath outpath)
+  (loop
+    :for a :in articles
+    :for path := (merge-pathnames* (make-pathname :name (getf a :name)
+                                                  :type "html")
+                                   asetpath outpath)
+    :for params := `(:aset-meta ,meta
+                     :path ,(pathname-directory path)
+                     ,@a)
+    :do (ensure-directories-exist path)
+    :do (with-open-file (out path :direction :output)
+          (let ((*standard-output* out))
+            (render-element template params)))))
+
+(defun render-pages% (pages meta articles rootpath outpath)
+  (loop
       :for p :in pages
       :for page := (with-open-file (in (merge-pathnames (make-pathname :name (getf p :name)
                                                                        :type "shtml")
@@ -106,4 +96,20 @@
                        ,@p)
       :do (with-open-file (out path :direction :output)
             (let ((*standard-output* out))
-              (render-element page params))))))
+              (render-element page params)))))
+
+(defun render-blog (aset rootpath outpath)
+  (uiop:delete-directory-tree outpath :validate t :if-does-not-exist :ignore)
+  (ensure-directories-exist outpath)
+  (let* ((meta (article-set-meta aset))
+         (asetpath (make-pathname :directory `(:relative ,(getf meta :name))))
+         (template% (article-set-template aset))
+         (template (with-open-file (in (merge-pathnames (make-pathname :name template%
+                                                                       :type "shtml")
+                                                        rootpath)
+                                       :direction :input)
+                     (eval (read in))))
+         (pages (article-set-pages aset))
+         (articles (mapcar #'article->plist (article-set-articles aset))))
+    (render-articles% articles template meta asetpath outpath)
+    (render-pages% pages meta articles rootpath outpath)))
