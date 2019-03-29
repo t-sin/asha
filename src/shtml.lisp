@@ -63,7 +63,7 @@
 
 (defun render-element (e &optional params (indent 0))
   (typecase e
-    (string (format *standard-output* "~v,0t~a~%" (+ indent 2) e))
+    (string (format *standard-output* "~v,0t~a~%" indent e))
     (element (render-shtml-element e params indent))
     (function (render-shtml-element (make-element* (funcall e params)) params indent))
     (t (error "it's not a shtml element: ~s." e))))
