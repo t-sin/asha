@@ -89,21 +89,21 @@
 
 (defun render-pages% (pages meta articles rootpath outpath)
   (loop
-      :for p :in pages
-      :for page := (with-open-file (in (merge-pathnames (make-pathname :name (getf p :name)
-                                                                       :type "shtml")
-                                                        rootpath)
-                                       :direction :input)
-                     (eval (read in)))
-      :for path := (merge-pathnames (make-pathname :name (getf p :name)
-                                                   :type "html")
-                                    outpath)
-      :for params := `(:aset-meta ,meta
-                       :articles ,articles
-                       ,@p)
-      :do (with-open-file (out path :direction :output)
-            (let ((*standard-output* out))
-              (render-element page params)))))
+    :for p :in pages
+    :for page := (with-open-file (in (merge-pathnames (make-pathname :name (getf p :name)
+                                                                     :type "shtml")
+                                                      rootpath)
+                                     :direction :input)
+                   (eval (read in)))
+    :for path := (merge-pathnames (make-pathname :name (getf p :name)
+                                                 :type "html")
+                                  outpath)
+    :for params := `(:aset-meta ,meta
+                     :articles ,articles
+                     ,@p)
+    :do (with-open-file (out path :direction :output)
+          (let ((*standard-output* out))
+            (render-element page params)))))
 
 (defun render-blog (aset rootpath outpath)
   (uiop:delete-directory-tree outpath :validate t :if-does-not-exist :ignore)
