@@ -23,6 +23,7 @@
                 #:add-article)
   (:export #:create-blog
            #:load-blog
+           #:save-blog
            #:new-post
            #:render-blog))
 (in-package #:asha)
@@ -34,6 +35,10 @@
 (defun load-blog (rootpath name)
   (let ((*project-root-pathname* rootpath))
     (load-article-set name)))
+
+(defun save-blog (rootpath aset)
+  (let ((*project-root-pathname* rootpath))
+    (save-article-set aset)))
 
 (defun new-post% (article aset &optional (update-p nil))
   (let* ((aname (getf article :name))
