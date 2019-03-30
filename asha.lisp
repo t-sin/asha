@@ -28,13 +28,15 @@
            #:render-blog))
 (in-package #:asha)
 
-(defun create-blog (rootpath name)
-  (let ((*project-root-pathname* rootpath))
-    (save-article-set (init-article-set name))))
+(defvar +blog-aset-name+ "posts")
 
-(defun load-blog (rootpath name)
+(defun create-blog (rootpath)
   (let ((*project-root-pathname* rootpath))
-    (load-article-set name)))
+    (save-article-set (init-article-set +blog-aset-name+))))
+
+(defun load-blog (rootpath)
+  (let ((*project-root-pathname* rootpath))
+    (load-article-set +blog-aset-name+)))
 
 (defun save-blog (rootpath aset)
   (let ((*project-root-pathname* rootpath))
