@@ -51,15 +51,15 @@
                                   *project-root-pathname*)))
     (with-open-file (out apath :direction :output :if-exists :supersede)
       (print article out))
-    (add-article (make-article :name aname
-                               :created-at (let ((prev-a (find aname (article-set-articles aset)
-                                                               :key #'article-name
-                                                               :test #'string=)))
-                                             (if prev-a (article-created-at prev-a) (now)))
-                               :tags (getf article :tags)
-                               :title (getf article :title)
-                               :body (getf article :body))
-                 aset update-p)
+    (let ((prev-a (find aname (article-set-articles aset)
+                        :key #'article-name
+                        :test #'string=)))
+      (add-article (make-article :name aname
+                                 :created-at (if prev-a (article-created-at prev-a) (now))
+                                 :tags (getf article :tags)
+                                 :title (getf article :title)
+                                 :body (getf article :body))
+                   aset update-p))
     (save-article-set aset)))
 
 (defun new-post (rootpath article aset &optional (update-p nil))
