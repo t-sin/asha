@@ -84,7 +84,7 @@
                                                  (list :name (article-name a)
                                                        :created-at (article-created-at a)))
                                                (article-set-articles aset))))
-      t)))
+      aset)))
 
 (defun load-article-set (set-name)
   (let ((state (load-article-set-state set-name)))
