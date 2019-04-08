@@ -1,5 +1,7 @@
 # Asha
 
+![Asha logo](asha.gif)
+
 *Asha* is a static site generating system.
 
 The purpose of *asha* is to show how to construct domain-specific language with Common Lisp, or to show how to write a system with Common Lisp.
