@@ -2,9 +2,8 @@
   :description "A static site generating system"
   :author "TANAKA Shinichi"
   :license "MIT"
-  :components ((:file "asha" :depends-on ("src"))
-               (:module "src"
-                 :components ((:file "util")
-                              (:file "shtml")
-                              (:file "article"))
-                 :serial t)))
+  :depends-on ("local-time"
+               "djula")
+  :components ((:module "src"
+                :serial t
+                :components ((:file "asha")))))
