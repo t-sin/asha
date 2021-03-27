@@ -3,29 +3,30 @@
   (:export))
 (in-package :asha)
 
-(defclass element ()
+(defclass document ()
+  ((name)))
 
-(defclass page (element))
+(defclass template (document)
+  ())
 
-(defclass article-set (element))
+(defclass page (document)
+  ())
 
-(defclass website (element)
-  ((rootpath)
-   (metadata)
-   (pages)
-   (article-sets)))
+(defstruct website
+  rootpath metadata pages templates article-sets)
 
-(defgeneric add (type website obj))
-(defgeneric render (obj))
+(defgeneric add-document (document website))
 
-(defun create-website (rootpath)
+(deftype filetype ()
+  '(member :text :binary))
+
+(defstruct file
+  (path nil :type pathname)
+  (type :text :type filetype)
+  content)
+
+(defgeneric render-document (document website))
+
+(defun create-website (rootpath))
 (defun load-website (rootpath))
 (defun save-website (website))
-
-(defmethod add ((type (eql :template)) (website website) path))
-(defmethod add ((type (eql :page)) (website website) path))
-(defmethod add ((type (eql :article-set)) (website website) obj))
-
-(defmethod render ((obj page)))
-(defmethod render ((obj article-set)))
-(defmethod render ((obj website)))
