@@ -4,8 +4,15 @@
 (in-package :asha)
 
 ;;; website
+(defstruct website-metadata
+  title author description date-from
+  article-set-names)
+
 (defstruct website
-  rootpath metadata contents templates article-sets)
+  (rootpath #P"" :type pathname)
+  (metadata (make-website-metadata)
+            :type website-metadata)
+  contents templates article-sets)
 
 (defclass document ()
   ((name :type string
@@ -52,7 +59,30 @@
 (defun create-website (rootpath)
   (make-website :rootpath (truename rootpath)))
 
-(defun load-website (rootpath))
+(defun load-website (rootpath)
+  (unless (probe-file rootpath)
+    (error "no such directory"))
+  (let* ((website (make-website))
+         (asha-dir (merge-pathnames (make-pathname :directory '(:relative  ".asha")) rootpath))
+         (asha-file (merge-pathnames (make-pathname :name "website" :type "lisp") asha-dir))
+         (content-list-file (merge-pathnames (make-pathname :name "contents" :type "lisp") asha-dir))
+         (template-list-file (merge-pathnames (make-pathname :name "templates" :type "lisp") asha-dir)))
+    (with-open-file (in asha-file :direction :input)
+      (let ((obj (read in)))
+        (unless (typep obj 'website-metadata)
+          (error "this is not a website-metadata: ~s" obj))
+        (setf (website-metadata website) obj)))
+    (with-open-file (in content-list-file :direction :input)
+      (let ((obj (read in)))
+        (unless (typep obj 'list)
+          (error "this is not a content-list: ~s" obj))
+        (setf (website-contents website) obj)))
+    (with-open-file (in template-list-file :direction :input)
+      (let ((obj (read in)))
+        (unless (typep obj 'list)
+          (error "this is not a template-list: ~s" obj))
+        (setf (website-templates website) obj)))
+    website))
 
 (defun save-website (website)
   (let* ((asha-dir (merge-pathnames (make-pathname :directory '(:relative  ".asha"))
@@ -63,11 +93,13 @@
     (ensure-directories-exist asha-dir)
     (with-open-file (out asha-file :direction :output :if-exists :supersede)
       (let ((*print-pretty* t))
-        (print website out)))
+        (print (website-metadata website) out)))
     (with-open-file (out content-list-file :direction :output :if-exists :supersede)
-      (print (website-contents website) out))
+      (let ((*print-pretty* t))
+        (print (website-contents website) out)))
     (with-open-file (out template-list-file :direction :output :if-exists :supersede)
-      (print (website-templates website) out))))
+      (let ((*print-pretty* t))
+        (print (website-templates website) out)))))
 
 (defun add-template (path website))
 (defun add-content (path website))
