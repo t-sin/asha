@@ -14,30 +14,47 @@
             :type website-metadata)
   contents templates article-sets)
 
-(defclass document ()
-  ((name :type string
-         :initarg :name
-         :accessor document-name)))
+(defstruct document
+  (name "" :type string))
 
-(defclass template (document)
-  ((path :type pathname
-         :initarg :path
-         :accessor template-path)))
+(defstruct (template (:include document))
+  (pathstr "" :type string))
 
-(defclass content (document)
-  ((template-name :type (or string nul)
-                  :initarg :template-name
-                  :accessor content-template-name)
-   (type :type symbol
-         :initarg :type
-         :accessor content-type)
-   (path :type pathname
-         :initarg :path
-         :accessor content-body)))
+(defstruct (content (:include document))
+  (template-name nil :type (or string null))
+  (type "" :type string)
+  (pathstr "" :type string))
+
+(defun metadata-plist (metadata)
+  (list :website-title (website-metadata-title metadata)
+        :website-author (website-metadata-author metadata)
+        :website-description (website-metadata-description metadata)
+        :website-date-from (website-metadata-date-from metadata)))
 
 ;;; primitive operations
 
-(defgeneric dump-document (document))
+(defun find-document (name lis)
+  (find name lis
+        :key #'document-name
+        :test #'string=))
+
+(defgeneric render-document (stream document website))
+
+(defmethod render-document (stream (content content) (website website))
+  (let ((template (find-document (content-template-name content)
+                                 (website-templates website))))
+    (if (null template)
+        (with-open-file (in (merge-pathnames (content-pathstr content)
+                                             (website-rootpath website))
+                            :direction :input)
+          (loop
+            :for line := (read-line in nil :eof)
+            :until (eq line :eof)
+            :do (write-line line stream)))
+        (let ((path (merge-pathnames (template-pathstr template)
+                                     (website-rootpath website)))
+              (metadata (metadata-plist (website-metadata website))))
+          (apply #'djula:render-template* `(,path ,stream ,@metadata))))))
 
 (deftype filetype ()
   '(member :text :binary))
@@ -46,8 +63,6 @@
   (path nil :type pathname)
   (type :text :type filetype)
   content)
-
-(defgeneric render-document (document website))
 
 ;;; utilities
 
@@ -105,9 +120,9 @@
   (let ((template-path (merge-pathnames path (website-rootpath website))))
     (unless (probe-file template-path)
       (error "no such directory: ~s" template-path))
-    (let ((template (make-instance 'template
-                                   :name (pathname-name template-path)
-                                   :path template-path)))
+    (let ((template (make-template
+                     :name (pathname-name template-path)
+                     :pathstr (enough-namestring template-path (website-rootpath website)))))
       (push template (website-templates website))
       template-path)))
 
@@ -115,10 +130,10 @@
   (let ((content-path (merge-pathnames path (website-rootpath website))))
     (unless (probe-file content-path)
       (error "no such directory: ~s" content-path))
-    (let ((content (make-instance 'content
-                                  :name (pathname-name content-path)
-                                  :template-name template-name
-                                  :type (pathname-type content-path)
-                                  :path content-path)))
+    (let ((content (make-content
+                    :name (pathname-name content-path)
+                    :template-name template-name
+                    :type (pathname-type content-path)
+                    :pathstr (enough-namestring content-path (website-rootpath website)))))
       (push content (website-contents website))
       content-path)))
