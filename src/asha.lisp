@@ -116,6 +116,14 @@
       (let ((*print-pretty* t))
         (print (website-templates website) out)))))
 
+(defun render-website (website directory)
+  (ensure-directories-exist directory)
+  (loop
+    :for content :in (website-contents website)
+    :for path := (merge-pathnames (content-pathstr content) directory)
+    :do (with-open-file (out path :direction :output)
+          (render-document out content website))))
+
 (defun add-template (path website)
   (let ((template-path (merge-pathnames path (website-rootpath website))))
     (unless (probe-file template-path)
