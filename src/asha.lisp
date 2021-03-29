@@ -67,6 +67,7 @@
          (asha-file (merge-pathnames (make-pathname :name "website" :type "lisp") asha-dir))
          (content-list-file (merge-pathnames (make-pathname :name "contents" :type "lisp") asha-dir))
          (template-list-file (merge-pathnames (make-pathname :name "templates" :type "lisp") asha-dir)))
+    (setf (website-rootpath website) (pathname rootpath))
     (with-open-file (in asha-file :direction :input)
       (let ((obj (read in)))
         (unless (typep obj 'website-metadata)
