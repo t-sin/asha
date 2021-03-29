@@ -61,7 +61,7 @@
 
 (defun load-website (rootpath)
   (unless (probe-file rootpath)
-    (error "no such directory"))
+    (error "no such directory: ~s" rootpath))
   (let* ((website (make-website))
          (asha-dir (merge-pathnames (make-pathname :directory '(:relative  ".asha")) rootpath))
          (asha-file (merge-pathnames (make-pathname :name "website" :type "lisp") asha-dir))
