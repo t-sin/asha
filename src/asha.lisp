@@ -102,5 +102,12 @@
       (let ((*print-pretty* t))
         (print (website-templates website) out)))))
 
-(defun add-template (path website))
+(defun add-template (path website)
+  (let ((template-path (merge-pathnames path (website-rootpath website))))
+    (unless (probe-file template-path)
+      (error "no such directory: ~s" template-path))
+    (let* ((template (make-instance 'template :path template-path)))
+      (push template (website-templates website))
+      template-path)))
+
 (defun add-content (path website))
