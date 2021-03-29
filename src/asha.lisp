@@ -20,23 +20,22 @@
          :accessor document-name)))
 
 (defclass template (document)
-  ((params :type symbol
-           :initarg :params
-           :accessor template-params)
-   (path :type list
+  ((path :type pathname
          :initarg :path
          :accessor template-path)))
 
 (defclass content (document)
-  ((type :type symbol
+  ((template-name :type (or string nul)
+                  :initarg :template-name
+                  :accessor content-template-name)
+   (type :type symbol
          :initarg :type
          :accessor content-type)
-   (body :initarg :body
+   (path :type pathname
+         :initarg :path
          :accessor content-body)))
 
 ;;; primitive operations
-
-(defgeneric add-document (document website))
 
 (defgeneric dump-document (document))
 
@@ -106,8 +105,20 @@
   (let ((template-path (merge-pathnames path (website-rootpath website))))
     (unless (probe-file template-path)
       (error "no such directory: ~s" template-path))
-    (let* ((template (make-instance 'template :path template-path)))
+    (let ((template (make-instance 'template
+                                   :name (pathname-name template-path)
+                                   :path template-path)))
       (push template (website-templates website))
       template-path)))
 
-(defun add-content (path website))
+(defun add-content (path template-name website)
+  (let ((content-path (merge-pathnames path (website-rootpath website))))
+    (unless (probe-file content-path)
+      (error "no such directory: ~s" content-path))
+    (let ((content (make-instance 'content
+                                  :name (pathname-name content-path)
+                                  :template-name template-name
+                                  :type (pathname-type content-path)
+                                  :path content-path)))
+      (push content (website-contents website))
+      content-path)))
