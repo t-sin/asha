@@ -115,12 +115,13 @@
       (let ((*print-pretty* t))
         (print (website-templates website) out)))))
 
-(defun render-website (website directory)
+(defun publish-website (website directory)
   (ensure-directories-exist directory)
   (loop
     :for content :in (website-contents website)
     :for path := (merge-pathnames (content-pathstr content) directory)
-    :do (with-open-file (out path :direction :output)
+    :do (ensure-directories-exist path)
+    :do (with-open-file (out path :direction :output :if-exists :supersede)
           (render-document out content website))))
 
 (defun add-template (path website)
