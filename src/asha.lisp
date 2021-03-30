@@ -51,8 +51,7 @@
             :for line := (read-line in nil :eof)
             :until (eq line :eof)
             :do (write-line line stream)))
-        (let ((path (merge-pathnames (template-pathstr template)
-                                     (website-rootpath website)))
+        (let ((path (content-pathstr content))
               (metadata (metadata-plist (website-metadata website))))
           (apply #'djula:render-template* `(,path ,stream ,@metadata))))))
 
