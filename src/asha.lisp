@@ -117,7 +117,7 @@
         (print (website-templates website) out)))))
 
 (defun publish-website (website directory)
-  (ensure-directories-exist directory)
+  (uiop:delete-directory-tree directory :validate t)
   (loop
     :for content :in (website-contents website)
     :for path := (merge-pathnames (content-pathstr content) directory)
