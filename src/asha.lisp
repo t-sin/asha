@@ -5,8 +5,7 @@
 
 ;;; website
 (defstruct website-metadata
-  title author description date-from
-  article-set-names)
+  title author description date-from)
 
 (defstruct website
   (rootpath #P"" :type pathname)
@@ -22,6 +21,8 @@
 
 (defstruct (content (:include document))
   (template-name nil :type (or string null))
+  (created-at "" :type string)
+  (updated-at "" :type string)
   (pathstr "" :type string))
 
 (defun metadata-plist (metadata)
@@ -69,6 +70,32 @@
     (let ((html (chtml:parse htmlstr (chtml:make-lhtml-builder))))
       (make-index (rest (find-body html))))))
 
+(defun read-content (str)
+  (let ((document (with-input-from-string (in str)
+                    (rosa:peruse-as-plist in #'string-upcase))))
+    (setf (getf document :title) (elt (getf document :title) 0))
+    (setf (getf document :created-at)
+          (let ((s (elt (getf document :created-at) 0)))
+            (unless (string= s "") s)))
+    (setf (getf document :updated-at)
+                    (let ((s (elt (getf document :updated-at) 0)))
+            (unless (string= s "") s)))
+    (setf (getf document :description) (elt (getf document :description) 0))
+    (setf (getf document :content) (elt (getf document :content) 0))
+    document))
+
+(defun document-newer-p (content document)
+  (let ((content-updated-at (content-updated-at content))
+        (document-updated-at (getf document :updated-at)))
+    (if (null content-updated-at)
+        (if (null document-updated-at)
+            nil
+            document-updated-at)
+        (if (null document-updated-at)
+            nil
+            (local-time:timestamp< (local-time:parse-timestring content-updated-at)
+                                   (local-time:parse-timestring document-updated-at))))))
+
 ;;; primitive operations
 
 (defun find-document (name lis)
@@ -96,13 +123,18 @@
               (metadata (metadata-plist (website-metadata website))))
           (case (path-type path)
             (:html (apply #'djula:render-template* `(,path ,stream ,@metadata)))
-            (:md (let* ((html (with-output-to-string (out)
-                                (markdown:markdown (read-to-string path) :stream out)))
-                        (index (make-index html))
-                        (args `(,temp-path ,stream ,@metadata
-                                           :content ,html
-                                           :title ,(caddr (first index)))))
-                   (apply #'djula:render-template* args))))))))
+            (:md (let* ((document (read-content (read-to-string path)))
+                        (html (with-output-to-string (out)
+                                (markdown:markdown (getf document :content) :stream out)))
+                        (index (make-index html)))
+                   (setf (getf document :content) html)
+                   (if (document-newer-p content document)
+                       (error "This document is updated. Please maintain website state.")
+                       (progn
+                         (when (null (getf document :updated-at))
+                           (setf (getf document :updated-at) "-"))
+                         (apply #'djula:render-template*
+                              `(,temp-path ,stream ,@metadata ,@document :index ,index)))))))))))
 
 (deftype filetype ()
   '(member :text :binary))
