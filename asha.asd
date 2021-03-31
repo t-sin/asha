@@ -4,6 +4,7 @@
   :license "MIT"
   :depends-on ("uiop"
                "local-time"
+               "cl-markdown"
                "djula")
   :components ((:module "src"
                 :serial t
