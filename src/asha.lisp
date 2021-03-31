@@ -149,7 +149,6 @@
     :for output-path := (determine-output-path path)
     :do (ensure-directories-exist path)
     :do (with-open-file (out output-path :direction :output :if-exists :supersede)
-          (print output-path)
           (render-document out content website))))
 
 (defun add-template (path website)
