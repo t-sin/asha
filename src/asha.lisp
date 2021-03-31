@@ -35,6 +35,25 @@
 (defun determine-rootpath (path)
   path)
 
+(defun path-type (path)
+  (intern (string-upcase (pathname-type path)) :keyword))
+
+(defun determine-output-path (path)
+  (case (path-type path)
+    (:md (make-pathname :directory (pathname-directory path)
+                        :name (pathname-name path)
+                        :type "html"))
+    (t path)))
+
+(defun read-to-string (path)
+  (with-output-to-string (out)
+    (with-open-file (in path :direction :input)
+      (loop
+        :for line := (read-line in nil :eof)
+        :until (eq line :eof)
+        :do (write-line line out)))))
+
+
 ;;; primitive operations
 
 (defun find-document (name lis)
@@ -121,8 +140,10 @@
   (loop
     :for content :in (website-contents website)
     :for path := (merge-pathnames (content-pathstr content) directory)
+    :for output-path := (determine-output-path path)
     :do (ensure-directories-exist path)
-    :do (with-open-file (out path :direction :output :if-exists :supersede)
+    :do (with-open-file (out output-path :direction :output :if-exists :supersede)
+          (print output-path)
           (render-document out content website))))
 
 (defun add-template (path website)
