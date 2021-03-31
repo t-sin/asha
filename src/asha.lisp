@@ -30,6 +30,11 @@
         :website-description (website-metadata-description metadata)
         :website-date-from (website-metadata-date-from metadata)))
 
+;;; utilities
+
+(defun determine-rootpath (path)
+  path)
+
 ;;; primitive operations
 
 (defun find-document (name lis)
@@ -62,10 +67,6 @@
   (path nil :type pathname)
   (type :text :type filetype)
   content)
-
-;;; utilities
-
-(defun determine-rootpath (path))
 
 ;;; user operations
 
