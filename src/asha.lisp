@@ -53,6 +53,21 @@
         :until (eq line :eof)
         :do (write-line line out)))))
 
+(defun make-index (htmlstr)
+  (labels ((find-body (html)
+             (if (eq (first html) :body)
+                 html
+                 (find-if #'find-body (rest html))))
+           (make-index (elements)
+             (loop
+               :with headers := (loop
+                                  :for n :from 0 :upto 9
+                                  :collect (intern (format nil "H~d" n) :keyword))
+               :for e :in elements
+               :when (and (consp e) (member (first e) headers))
+               :collect e)))
+    (let ((html (chtml:parse htmlstr (chtml:make-lhtml-builder))))
+      (make-index (rest (find-body html))))))
 
 ;;; primitive operations
 
@@ -81,9 +96,13 @@
               (metadata (metadata-plist (website-metadata website))))
           (case (path-type path)
             (:html (apply #'djula:render-template* `(,path ,stream ,@metadata)))
-            (:md (let ((html (with-output-to-string (out)
-                               (markdown:markdown (read-to-string path) :stream out))))
-                   (apply #'djula:render-template* `(,temp-path ,stream ,@metadata :content ,html)))))))))
+            (:md (let* ((html (with-output-to-string (out)
+                                (markdown:markdown (read-to-string path) :stream out)))
+                        (index (make-index html))
+                        (args `(,temp-path ,stream ,@metadata
+                                           :content ,html
+                                           :title ,(caddr (first index)))))
+                   (apply #'djula:render-template* args))))))))
 
 (deftype filetype ()
   '(member :text :binary))
