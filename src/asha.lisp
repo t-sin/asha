@@ -22,7 +22,6 @@
 
 (defstruct (content (:include document))
   (template-name nil :type (or string null))
-  (type "" :type string)
   (pathstr "" :type string))
 
 (defun metadata-plist (metadata)
@@ -142,7 +141,6 @@
     (let ((content (make-content
                     :name (pathname-name content-path)
                     :template-name template-name
-                    :type (pathname-type content-path)
                     :pathstr (enough-namestring content-path (website-rootpath website)))))
       (push content (website-contents website))
       content-path)))
