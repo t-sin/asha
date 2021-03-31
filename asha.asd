@@ -5,7 +5,9 @@
   :depends-on ("uiop"
                "local-time"
                "cl-markdown"
-               "djula")
+               "djula"
+               "closure-html"
+               "rosa")
   :components ((:module "src"
                 :serial t
                 :components ((:file "asha")))))
