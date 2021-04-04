@@ -25,6 +25,9 @@
   (updated-at "" :type string)
   (pathstr "" :type string))
 
+(defstruct (article-set (:include document))
+  articles)
+
 (defun metadata-plist (metadata)
   (list :website-title (website-metadata-title metadata)
         :website-author (website-metadata-author metadata)
@@ -35,6 +38,10 @@
 
 (defun determine-rootpath (path)
   path)
+
+(defun list-directories (path)
+  (directory (merge-pathnames (make-pathname :directory (list :relative :wild))
+                              path)))
 
 (defun path-type (path)
   (intern (string-upcase (pathname-type path)) :keyword))
@@ -152,6 +159,15 @@
 (defparameter *templates-file* (make-pathname :name "templates" :type "lisp"))
 (defparameter *article-sets-file* (make-pathname :name "articles" :type "lisp"))
 
+(defun load-article-set (article-set-dir)
+  (let ((article-set-file (merge-pathnames (make-pathname :name "articles" :type "lisp")
+                                           article-set-dir)))
+    (with-open-file (in article-set-file :direction :input)
+      (let ((obj (read in)))
+        (if (typep obj 'article-set)
+            obj
+            (error "this file is not article-set"))))))
+
 (defun create-website (rootpath)
   (make-website :rootpath (truename rootpath)))
 
@@ -199,7 +215,16 @@
         (print (website-contents website) out)))
     (with-open-file (out template-list-file :direction :output :if-exists :supersede)
       (let ((*print-pretty* t))
-        (print (website-templates website) out)))))
+        (print (website-templates website) out)))
+    (loop
+      :for article-set :in (website-article-sets website)
+      :for name := (document-name article-set)
+      :for article-set-path := (merge-pathnames (make-pathname :directory `(:relative ,name)) asha-dir)
+      :do (ensure-directories-exist article-set-path)
+      :do (with-open-file (out (merge-pathnames *article-sets-file* article-set-path)
+                               :direction :output :if-exists :supersede)
+            (let ((*print-pretty* t))
+              (print article-set out))))))
 
 (defun publish-website (website directory)
   (uiop:delete-directory-tree directory :validate t)
@@ -231,3 +256,12 @@
                     :pathstr (enough-namestring content-path (website-rootpath website)))))
       (push content (website-contents website))
       content-path)))
+
+(defun add-article-set (name website)
+  (let ((article-set-path (merge-pathnames (make-pathname :directory `(:relative ,name))
+                                           (merge-pathnames *asha-dir* (website-rootpath website)))))
+    (when (probe-file article-set-path)
+      (error "article set ~s already exists" name))
+    (let ((article-set (make-article-set :name name)))
+      (push article-set (website-article-sets website))
+      article-set)))
