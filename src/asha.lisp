@@ -104,6 +104,9 @@
             (local-time:timestamp< (local-time:parse-timestring content-updated-at)
                                    (local-time:parse-timestring document-updated-at))))))
 
+(defun now* ()
+  (local-time:format-timestring nil (local-time:now)))
+
 ;;; primitive operations
 
 (defun find-document (name lis)
@@ -269,34 +272,54 @@
 (defun add-content (path template-name website)
   (let ((content-path (merge-pathnames path (website-rootpath website))))
     (unless (probe-file content-path)
-      (error "no such directory: ~s" content-path))
-    (let ((content (make-content
-                    :name (pathname-name content-path)
-                    :template-name template-name
-                    :pathstr (enough-namestring content-path (website-rootpath website)))))
-      (push content (website-contents website))
-      content-path)))
+      (error "no such file: ~s" content-path))
+    (when (and (not (null template-name))
+               (null (find-document template-name (website-templates website))))
+      (error "there is no template: ~s" template-name))
+    (let ((content (find-document (pathname-name content-path)
+                                  (website-contents website))))
+      (if content
+          (progn
+            (setf (content-updated-at content) (now*))
+            content)
+          (let ((content (make-content
+                          :name (pathname-name content-path)
+                          :template-name template-name
+                          :created-at (now*)
+                          :pathstr (enough-namestring content-path (website-rootpath website)))))
+            (push content (website-contents website))
+            content)))))
 
 (defun add-article-set (name template-name website)
   (let ((article-set-path (merge-pathnames (make-pathname :directory `(:relative ,name))
                                            (merge-pathnames *asha-dir* (website-rootpath website)))))
     (when (probe-file article-set-path)
       (error "article set ~s already exists" name))
+    (unless (find-document template-name (website-templates website))
+      (error "there is no template: ~s" template-name))
     (let ((article-set (make-article-set :name name
                                          :template-name template-name)))
       (push article-set (website-article-sets website))
       name)))
 
 (defun add-article (path article-set-name website)
-  (let* ((article-set-path (merge-pathnames (make-pathname :directory `(:relative ,article-set-name))
-                                           (merge-pathnames *asha-dir* (website-rootpath website))))
+  (let* ((asha-dir (merge-pathnames *asha-dir* (website-rootpath website)))
+         (article-set-path (merge-pathnames (make-pathname :directory `(:relative ,article-set-name))
+                                            asha-dir))
          (article-path (merge-pathnames path article-set-path))
          (article-set (find article-set-name (website-article-sets website)
                             :key #'document-name :test #'string=)))
     (unless (probe-file article-path)
       (error "no such file: ~s" article-path))
-    (let ((article (make-content :name (pathname-name article-path)
-                                 :template-name (article-set-template-name article-set)
-                                 :pathstr (enough-namestring article-path (website-rootpath website)))))
-      (push article (article-set-articles article-set))
-      article-path)))
+    (let ((content (find-document (pathname-name article-path)
+                                  (website-contents website))))
+      (if content
+          (progn
+            (setf (content-updated-at content) (now*))
+            content)
+          (let ((article (make-content :name (pathname-name article-path)
+                                       :template-name (article-set-template-name article-set)
+                                       :created-at (now*)
+                                       :pathstr (enough-namestring article-path asha-dir))))
+            (push article (article-set-articles article-set))
+            article)))))
