@@ -227,15 +227,32 @@
             (let ((*print-pretty* t))
               (print article-set out))))))
 
+(defun publish-article-set (article-set website directory)
+  (let* ((name (document-name article-set))
+         (path (merge-pathnames (make-pathname :directory `(:relative ,name))
+                                directory)))
+    (ensure-directories-exist path)
+    (loop
+      :for content :in (article-set-articles article-set)
+      :for filename := (make-pathname :name (pathname-name (content-pathstr content))
+                                      :type (pathname-type (content-pathstr content)))
+      :for output-path := (determine-output-path (merge-pathnames filename path))
+      :do (with-open-file (out output-path :direction :output :if-exists :supersede)
+            (render-document out content website)))))
+
 (defun publish-website (website directory)
-  (uiop:delete-directory-tree directory :validate t)
+  (when (probe-file directory)
+    (uiop:delete-directory-tree directory :validate t))
   (loop
     :for content :in (website-contents website)
     :for path := (merge-pathnames (content-pathstr content) directory)
     :for output-path := (determine-output-path path)
     :do (ensure-directories-exist path)
     :do (with-open-file (out output-path :direction :output :if-exists :supersede)
-          (render-document out content website))))
+          (render-document out content website)))
+  (loop
+    :for article-set :in (website-article-sets website)
+    :do (publish-article-set article-set website directory)))
 
 (defun add-template (path website)
   (let ((template-path (merge-pathnames path (website-rootpath website))))
