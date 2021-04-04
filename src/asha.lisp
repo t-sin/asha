@@ -26,6 +26,7 @@
   (pathstr "" :type string))
 
 (defstruct (article-set (:include document))
+  (template-name "" :type string)
   articles)
 
 (defun metadata-plist (metadata)
@@ -257,11 +258,12 @@
       (push content (website-contents website))
       content-path)))
 
-(defun add-article-set (name website)
+(defun add-article-set (name template-name website)
   (let ((article-set-path (merge-pathnames (make-pathname :directory `(:relative ,name))
                                            (merge-pathnames *asha-dir* (website-rootpath website)))))
     (when (probe-file article-set-path)
       (error "article set ~s already exists" name))
-    (let ((article-set (make-article-set :name name)))
+    (let ((article-set (make-article-set :name name
+                                         :template-name template-name)))
       (push article-set (website-article-sets website))
-      article-set)))
+      name)))
