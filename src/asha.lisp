@@ -232,6 +232,8 @@
          (path (merge-pathnames (make-pathname :directory `(:relative ,name))
                                 directory)))
     (ensure-directories-exist path)
+    ;; TODO: culculating prev/next link
+    ;; TODO: generating index page
     (loop
       :for content :in (article-set-articles article-set)
       :for filename := (make-pathname :name (pathname-name (content-pathstr content))
