@@ -1,7 +1,0 @@
-(:meta (:title "Static site sample"
-        :root-url "https://static-site.sample")
- :pages ((:name "index" :filename "index"))
- :page-groups ((:name "tech-posts"
-                :path "posts")
-               (:name "diary"
-                :path "diary"))

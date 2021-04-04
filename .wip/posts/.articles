@@ -1,2 +1,0 @@
-(:META (:NAME "posts") :PAGES ((:NAME "index") (:NAME "tags")) :ARTICLES
- ((:NAME "static-site-generator" :CREATED-AT "2019-03-25T10:39:18")))
