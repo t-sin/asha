@@ -108,9 +108,7 @@
         :key #'document-name
         :test #'string=))
 
-(defgeneric render-document (stream document website))
-
-(defmethod render-document (stream (content content) (website website))
+(defun render-content (stream content website &optional params)
   (let ((template (find-document (content-template-name content)
                                  (website-templates website))))
     (if (null template)
@@ -138,7 +136,9 @@
                                                         (content-updated-at content)))))
                    (setf (getf document :content) html)
                    (apply #'djula:render-template*
-                          `(,temp-path ,stream ,@website-metadata ,@metadata ,@document :index ,index)))))))))
+                          `(,temp-path ,stream
+                                       ,@website-metadata ,@metadata ,@document ,@params
+                                       :index ,index)))))))))
 
 (deftype filetype ()
   '(member :text :binary))
@@ -236,7 +236,7 @@
                                       :type (pathname-type (content-pathstr content)))
       :for output-path := (determine-output-path (merge-pathnames filename path))
       :do (with-open-file (out output-path :direction :output :if-exists :supersede)
-            (render-document out content website)))))
+            (render-content out content website)))))
 
 (defun publish-website (website directory)
   (when (probe-file directory)
@@ -247,7 +247,7 @@
     :for output-path := (determine-output-path path)
     :do (ensure-directories-exist path)
     :do (with-open-file (out output-path :direction :output :if-exists :supersede)
-          (render-document out content website)))
+          (render-content out content website)))
   (loop
     :for article-set :in (website-article-sets website)
     :do (publish-article-set article-set website directory)))
