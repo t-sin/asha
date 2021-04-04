@@ -228,15 +228,20 @@
          (path (merge-pathnames (make-pathname :directory `(:relative ,name))
                                 directory)))
     (ensure-directories-exist path)
-    ;; TODO: culculating prev/next link
-    ;; TODO: generating index page
-    (loop
-      :for content :in (article-set-articles article-set)
-      :for filename := (make-pathname :name (pathname-name (content-pathstr content))
-                                      :type (pathname-type (content-pathstr content)))
-      :for output-path := (determine-output-path (merge-pathnames filename path))
-      :do (with-open-file (out output-path :direction :output :if-exists :supersede)
-            (render-content out content website)))))
+    (let* ((articles (copy-list (article-set-articles article-set)))
+           (sorted (sort articles (lambda (a b)
+                                    (let ((a (local-time:parse-timestring a))
+                                          (b (local-time:parse-timestring b)))
+                                      (local-time:timestamp< a b))))))
+      ;; TODO: culculating prev/next link
+      ;; TODO: generating index page
+      (loop
+        :for content :in sorted
+        :for filename := (make-pathname :name (pathname-name (content-pathstr content))
+                                        :type (pathname-type (content-pathstr content)))
+        :for output-path := (determine-output-path (merge-pathnames filename path))
+        :do (with-open-file (out output-path :direction :output :if-exists :supersede)
+              (render-content out content website))))))
 
 (defun publish-website (website directory)
   (when (probe-file directory)
