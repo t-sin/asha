@@ -146,6 +146,12 @@
 
 ;;; user operations
 
+(defparameter *asha-dir* (make-pathname :directory '(:relative  ".asha")))
+(defparameter *asha-file* (make-pathname :name "website" :type "lisp"))
+(defparameter *contents-file* (make-pathname :name "contents" :type "lisp"))
+(defparameter *templates-file* (make-pathname :name "templates" :type "lisp"))
+(defparameter *article-sets-file* (make-pathname :name "articles" :type "lisp"))
+
 (defun create-website (rootpath)
   (make-website :rootpath (truename rootpath)))
 
@@ -153,10 +159,10 @@
   (unless (probe-file rootpath)
     (error "no such directory: ~s" rootpath))
   (let* ((website (make-website))
-         (asha-dir (merge-pathnames (make-pathname :directory '(:relative  ".asha")) rootpath))
-         (asha-file (merge-pathnames (make-pathname :name "website" :type "lisp") asha-dir))
-         (content-list-file (merge-pathnames (make-pathname :name "contents" :type "lisp") asha-dir))
-         (template-list-file (merge-pathnames (make-pathname :name "templates" :type "lisp") asha-dir)))
+         (asha-dir (merge-pathnames *asha-dir* rootpath))
+         (asha-file (merge-pathnames *asha-file* asha-dir))
+         (content-list-file (merge-pathnames *contents-file* asha-dir))
+         (template-list-file (merge-pathnames *templates-file* asha-dir)))
     (setf (website-rootpath website) (pathname rootpath))
     (with-open-file (in asha-file :direction :input)
       (let ((obj (read in)))
@@ -173,14 +179,17 @@
         (unless (typep obj 'list)
           (error "this is not a template-list: ~s" obj))
         (setf (website-templates website) obj)))
+    (setf (website-article-sets website)
+          (loop
+            :for article-set :in (list-directories asha-dir)
+            :collect (load-article-set article-set)))
     website))
 
 (defun save-website (website)
-  (let* ((asha-dir (merge-pathnames (make-pathname :directory '(:relative  ".asha"))
-                                    (website-rootpath website)))
-         (asha-file (merge-pathnames (make-pathname :name "website" :type "lisp") asha-dir))
-         (content-list-file (merge-pathnames (make-pathname :name "contents" :type "lisp") asha-dir))
-         (template-list-file (merge-pathnames (make-pathname :name "templates" :type "lisp") asha-dir)))
+  (let* ((asha-dir (merge-pathnames *asha-dir* (website-rootpath website)))
+         (asha-file (merge-pathnames *asha-file* asha-dir))
+         (content-list-file (merge-pathnames *contents-file* asha-dir))
+         (template-list-file (merge-pathnames *templates-file* asha-dir)))
     (ensure-directories-exist asha-dir)
     (with-open-file (out asha-file :direction :output :if-exists :supersede)
       (let ((*print-pretty* t))
