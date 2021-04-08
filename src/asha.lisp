@@ -230,10 +230,22 @@
             (let ((*print-pretty* t))
               (pprint article-set out))))))
 
-(defun collect-page-links (articles)
-  (declare (ignore articles))
-  (let ((linktable (make-hash-table)))
-    linktable))
+(defun collect-page-links (articles website)
+  (flet ((read-content (article)
+           (let* ((path (merge-pathnames (content-pathstr article)
+                                         (website-rootpath website)))
+                  (content (read-content (read-to-string path))))
+             (list :name (content-name article)
+                   :title (getf content :title)))))
+    (let ((link-table (make-hash-table :test 'equal)))
+      (loop
+        :with prev := nil
+        :for (a next) :on articles :by #'cdr
+        :do (setf (gethash (document-name a) link-table)
+                  (cons (when prev (read-content prev))
+                        (when next (read-content next))))
+        :do (setf prev a))
+      link-table)))
 
 (defun collect-article-info (articles website)
   (let ((tag-table (make-hash-table :test 'equal))
@@ -294,14 +306,18 @@
                                     (let ((a (local-time:parse-timestring (content-created-at a)))
                                           (b (local-time:parse-timestring (content-created-at b))))
                                       (local-time:timestamp< a b)))))
-           (article-link-table (collect-page-links sorted)))
+           (article-link-table (collect-page-links sorted website)))
       (loop
         :for content :in sorted
         :for filename := (make-pathname :name (pathname-name (content-pathstr content))
                                         :type (pathname-type (content-pathstr content)))
         :for output-path := (determine-output-path (merge-pathnames filename path))
+        :for (prev . next) := (gethash (document-name content) article-link-table)
+        :do (setf content (copy-content content))
+        :do (setf (content-template-name content) (article-set-template-name article-set))
         :do (with-open-file (out output-path :direction :output :if-exists :supersede)
-              (render-content out content website)))
+              (render-content out content website
+                              `(:prev-article ,prev :next-article ,next))))
       (publish-tag-pages sorted article-set website path)
       (values sorted article-link-table))))
 
@@ -386,7 +402,6 @@
               content)
             (let* ((tags (coerce (getf (read-document article-path) :tags) 'list))
                    (article (make-content :name (pathname-name article-path)
-                                          :template-name (article-set-template-name article-set)
                                           :created-at (now*)
                                           :tags tags
                                           :pathstr (enough-namestring article-path (website-rootpath website)))))
