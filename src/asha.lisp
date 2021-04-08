@@ -226,7 +226,38 @@
       :do (with-open-file (out (merge-pathnames *article-sets-file* article-set-path)
                                :direction :output :if-exists :supersede)
             (let ((*print-pretty* t))
-              (print article-set out))))))
+              (pprint article-set out))))))
+
+(defun calculate-prev/next-links (articles)
+  (declare (ignore articles))
+  (let ((linktable (make-hash-table)))
+    linktable))
+
+(defun publish-tag-pages (articles article-set website directory)
+  (let* ((tagtable (make-hash-table :test 'equal))
+         (template (find-document (article-set-tag-template-name article-set)
+                                  (website-templates website)))
+         (template-path (merge-pathnames (template-pathstr template)
+                                         (website-rootpath website))))
+    (loop
+      :for article :in articles
+      :for article-path := (merge-pathnames (content-pathstr article)
+                                            (website-rootpath website))
+      :for description := (getf (read-content (read-to-string article-path)) :description)
+      :do (loop
+            :for tag :in (content-tags article)
+            :for article-info := (list :title (document-name article)
+                                       :link (format nil "~a.html" (document-name article))
+                                       :description description)
+            :do (push article-info (gethash tag tagtable))))
+    (loop
+      :for tag :being :each :hash-key :of tagtable :using (hash-value article-info-list)
+      :for filename := (format nil "~a.html" tag)
+      :for outpath := (merge-pathnames filename directory)
+      :do (with-open-file (out outpath :direction :output :if-exists :supersede)
+            (let* ((metadata (metadata-plist (website-metadata website)))
+                   (args `(,@metadata :article-info-list ,article-info-list)))
+              (apply #'djula:render-template* `(,template-path ,out ,@args)))))))
 
 (defun publish-article-set (article-set website directory)
   (let* ((name (document-name article-set))
@@ -237,16 +268,17 @@
            (sorted (sort articles (lambda (a b)
                                     (let ((a (local-time:parse-timestring a))
                                           (b (local-time:parse-timestring b)))
-                                      (local-time:timestamp< a b))))))
-      ;; TODO: culculating prev/next link
-      ;; TODO: generating index page
+                                      (local-time:timestamp< a b)))))
+           (article-link-table (calculate-prev/next-links sorted)))
       (loop
         :for content :in sorted
         :for filename := (make-pathname :name (pathname-name (content-pathstr content))
                                         :type (pathname-type (content-pathstr content)))
         :for output-path := (determine-output-path (merge-pathnames filename path))
         :do (with-open-file (out output-path :direction :output :if-exists :supersede)
-              (render-content out content website))))))
+              (render-content out content website)))
+      (publish-tag-pages sorted article-set website path)
+      (values sorted article-link-table))))
 
 (defun publish-website (website directory)
   (when (probe-file directory)
@@ -260,7 +292,9 @@
           (render-content out content website)))
   (loop
     :for article-set :in (website-article-sets website)
-    :do (publish-article-set article-set website directory)))
+    :collect (multiple-value-bind (articles link-table)
+                 (publish-article-set article-set website directory)
+               (cons articles link-table))))
 
 (defun add-template (path website)
   (let ((template-path (merge-pathnames path (website-rootpath website))))
