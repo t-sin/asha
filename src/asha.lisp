@@ -125,7 +125,10 @@
                                      (website-rootpath website)))
               (temp-path (merge-pathnames (template-pathstr template)
                                           (website-rootpath website)))
-              (website-metadata (metadata-plist (website-metadata website))))
+              (website-metadata (metadata-plist (website-metadata website)))
+              (tag-info-list (loop
+                               :for tag :in (content-tags content)
+                               :collect (list :name tag :link (format nil "~a.html" tag)))))
           (case (path-type path)
             (:html (apply #'djula:render-template* `(,path ,stream ,@website-metadata)))
             (:md (let* ((document (read-content (read-to-string path)))
@@ -140,7 +143,7 @@
                    (apply #'djula:render-template*
                           `(,temp-path ,stream
                                        ,@website-metadata ,@metadata ,@document ,@params
-                                       :index ,index)))))))))
+                                       :tag-info-list ,tag-info-list :index ,index)))))))))
 
 (deftype filetype ()
   '(member :text :binary))
