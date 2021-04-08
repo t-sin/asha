@@ -266,7 +266,8 @@
       (with-open-file (out outpath :direction :output :if-exists :supersede)
         (let* ((metadata (metadata-plist (website-metadata website)))
                (args `(,@metadata :article-set-title ,(article-set-title article-set)
-                                  :article-info-list ,article-info-list)))
+                                  :article-info-list ,article-info-list
+                                  :tags ,(alexandria:hash-table-keys tag-table))))
           (apply #'djula:render-template* `(,template-path ,out ,@args)))))
     (let* ((tag-template (find-document (article-set-tag-template-name article-set)
                                         (website-templates website)))

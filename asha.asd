@@ -3,6 +3,7 @@
   :author "TANAKA Shinichi"
   :license "MIT"
   :depends-on ("uiop"
+               "alexandria"
                "local-time"
                "cl-markdown"
                "djula"
