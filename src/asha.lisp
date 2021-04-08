@@ -246,6 +246,7 @@
       :for article-info := (list :title (getf document :title)
                                  :description (getf document :description)
                                  :created-at (content-created-at article)
+                                 :tags (content-tags article)
                                  :link (format nil "~a.html" (document-name article)))
       :do (push article-info article-info-list)
       :do (loop
