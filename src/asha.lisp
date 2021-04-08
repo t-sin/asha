@@ -229,39 +229,47 @@
             (let ((*print-pretty* t))
               (pprint article-set out))))))
 
-(defun calculate-prev/next-links (articles)
+(defun collect-page-links (articles)
   (declare (ignore articles))
   (let ((linktable (make-hash-table)))
     linktable))
 
-(defun publish-tag-pages (articles article-set website directory)
-  (let* ((tagtable (make-hash-table :test 'equal))
-         (template (find-document (article-set-tag-template-name article-set)
-                                  (website-templates website)))
-         (template-path (merge-pathnames (template-pathstr template)
-                                         (website-rootpath website))))
+(defun collect-article-info (articles website)
+  (let ((tag-table (make-hash-table :test 'equal))
+        (article-info-list))
     (loop
       :for article :in articles
       :for article-path := (merge-pathnames (content-pathstr article)
                                             (website-rootpath website))
       :for document := (read-content (read-to-string article-path))
+      :for article-info := (list :title (getf document :title)
+                                 :description (getf document :description)
+                                 :created-at (content-created-at article)
+                                 :link (format nil "~a.html" (document-name article)))
+      :do (push article-info article-info-list)
       :do (loop
             :for tag :in (content-tags article)
-            :for article-info := (list :title (getf document :title)
-                                       :description (getf document :description)
-                                       :created-at (content-created-at article)
-                                       :link (format nil "~a.html" (document-name article)))
-            :do (push article-info (gethash tag tagtable))))
-    (loop
-      :for tag :being :each :hash-key :of tagtable :using (hash-value article-info-list)
-      :for filename := (format nil "~a.html" tag)
-      :for outpath := (merge-pathnames filename directory)
-      :do (with-open-file (out outpath :direction :output :if-exists :supersede)
-            (let* ((metadata (metadata-plist (website-metadata website)))
-                   (args `(,@metadata :article-set ,(article-set-title article-set)
-                                      :article-info-list ,article-info-list
-                                      :tag ,tag)))
-              (apply #'djula:render-template* `(,template-path ,out ,@args)))))))
+            :do (push article-info (gethash tag tag-table)))
+      :finally (setf article-info-list (nreverse article-info-list)))
+    (values article-info-list tag-table)))
+
+(defun publish-tag-pages (articles article-set website directory)
+  (let* ((template (find-document (article-set-tag-template-name article-set)
+                                  (website-templates website)))
+         (template-path (merge-pathnames (template-pathstr template)
+                                         (website-rootpath website))))
+    (multiple-value-bind (article-info-list tag-table)
+        (collect-article-info articles website)
+      (loop
+        :for tag :being :each :hash-key :of tag-table :using (hash-value tagged-article-info-list)
+        :for filename := (format nil "~a.html" tag)
+        :for outpath := (merge-pathnames filename directory)
+        :do (with-open-file (out outpath :direction :output :if-exists :supersede)
+              (let* ((metadata (metadata-plist (website-metadata website)))
+                     (args `(,@metadata :article-set ,(article-set-title article-set)
+                                        :article-info-list ,tagged-article-info-list
+                                        :tag ,tag)))
+                (apply #'djula:render-template* `(,template-path ,out ,@args))))))))
 
 (defun publish-article-set (article-set website directory)
   (let* ((name (document-name article-set))
@@ -273,7 +281,7 @@
                                     (let ((a (local-time:parse-timestring (content-created-at a)))
                                           (b (local-time:parse-timestring (content-created-at b))))
                                       (local-time:timestamp< a b)))))
-           (article-link-table (calculate-prev/next-links sorted)))
+           (article-link-table (collect-page-links sorted)))
       (loop
         :for content :in sorted
         :for filename := (make-pathname :name (pathname-name (content-pathstr content))
