@@ -346,8 +346,7 @@
       name)))
 
 (defun add-article (path article-set-name website)
-  (let* ((asha-dir (merge-pathnames *asha-dir* (website-rootpath website)))
-         (article-path (merge-pathnames path (website-rootpath website)))
+  (let* ((article-path (merge-pathnames path (website-rootpath website)))
          (article-set (find article-set-name (website-article-sets website)
                             :key #'document-name :test #'string=)))
     (unless (probe-file article-path)
@@ -355,9 +354,10 @@
     (flet ((read-document (path)
              (read-content (read-to-string path))))
       (let ((content (find-document (pathname-name article-path)
-                                    (website-contents website))))
+                                    (article-set-articles article-set))))
         (if content
-            (let* ((document (read-document (merge-pathnames (content-pathstr content) asha-dir)))
+            (let* ((document (read-document (merge-pathnames (content-pathstr content)
+                                                             (website-rootpath website))))
                    (tags (coerce (getf document :tags) 'list)))
               (setf (content-updated-at content) (now*)
                     (content-tags content) tags)
