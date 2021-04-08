@@ -291,7 +291,7 @@
         :for outpath := (merge-pathnames filename directory)
         :do (with-open-file (out outpath :direction :output :if-exists :supersede)
               (let* ((metadata (metadata-plist (website-metadata website)))
-                     (args `(,@metadata :article-set ,(article-set-title article-set)
+                     (args `(,@metadata :article-set-title ,(article-set-title article-set)
                                         :article-info-list ,tagged-article-info-list
                                         :tag ,tag)))
                 (apply #'djula:render-template* `(,template-path ,out ,@args))))))))
@@ -317,7 +317,8 @@
         :do (setf (content-template-name content) (article-set-template-name article-set))
         :do (with-open-file (out output-path :direction :output :if-exists :supersede)
               (render-content out content website
-                              `(:prev-article ,prev :next-article ,next))))
+                              `(:article-set-title ,(article-set-title article-set)
+                                :prev-article ,prev :next-article ,next))))
       (publish-tag-pages sorted article-set website path)
       (values sorted article-link-table))))
 
