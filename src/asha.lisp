@@ -270,8 +270,8 @@
     (ensure-directories-exist path)
     (let* ((articles (copy-list (article-set-articles article-set)))
            (sorted (sort articles (lambda (a b)
-                                    (let ((a (local-time:parse-timestring a))
-                                          (b (local-time:parse-timestring b)))
+                                    (let ((a (local-time:parse-timestring (content-created-at a)))
+                                          (b (local-time:parse-timestring (content-created-at b))))
                                       (local-time:timestamp< a b)))))
            (article-link-table (calculate-prev/next-links sorted)))
       (loop
