@@ -244,12 +244,13 @@
       :for article :in articles
       :for article-path := (merge-pathnames (content-pathstr article)
                                             (website-rootpath website))
-      :for description := (getf (read-content (read-to-string article-path)) :description)
+      :for document := (read-content (read-to-string article-path))
       :do (loop
             :for tag :in (content-tags article)
-            :for article-info := (list :title (document-name article)
-                                       :link (format nil "~a.html" (document-name article))
-                                       :description description)
+            :for article-info := (list :title (getf document :title)
+                                       :description (getf document :description)
+                                       :created-at (content-created-at article)
+                                       :link (format nil "~a.html" (document-name article)))
             :do (push article-info (gethash tag tagtable))))
     (loop
       :for tag :being :each :hash-key :of tagtable :using (hash-value article-info-list)
@@ -257,7 +258,9 @@
       :for outpath := (merge-pathnames filename directory)
       :do (with-open-file (out outpath :direction :output :if-exists :supersede)
             (let* ((metadata (metadata-plist (website-metadata website)))
-                   (args `(,@metadata :article-info-list ,article-info-list)))
+                   (args `(,@metadata :article-set ,(article-set-title article-set)
+                                      :article-info-list ,article-info-list
+                                      :tag ,tag)))
               (apply #'djula:render-template* `(,template-path ,out ,@args)))))))
 
 (defun publish-article-set (article-set website directory)
