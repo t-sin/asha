@@ -30,6 +30,7 @@
   (title "" :type string)
   (template-name "" :type string)
   (tag-template-name "" :type string)
+  (index-template-name "" :type string)
   articles)
 
 (defun metadata-plist (metadata)
@@ -254,12 +255,22 @@
     (values article-info-list tag-table)))
 
 (defun publish-tag-pages (articles article-set website directory)
-  (let* ((template (find-document (article-set-tag-template-name article-set)
-                                  (website-templates website)))
-         (template-path (merge-pathnames (template-pathstr template)
-                                         (website-rootpath website))))
-    (multiple-value-bind (article-info-list tag-table)
-        (collect-article-info articles website)
+  (multiple-value-bind (article-info-list tag-table)
+      (collect-article-info articles website)
+    (let* ((index-template (find-document (article-set-index-template-name article-set)
+                                          (website-templates website)))
+           (template-path (merge-pathnames (template-pathstr index-template)
+                                           (website-rootpath website)))
+           (outpath (merge-pathnames "index.html" directory)))
+      (with-open-file (out outpath :direction :output :if-exists :supersede)
+        (let* ((metadata (metadata-plist (website-metadata website)))
+               (args `(,@metadata :article-set-title ,(article-set-title article-set)
+                                  :article-info-list ,article-info-list)))
+          (apply #'djula:render-template* `(,template-path ,out ,@args)))))
+    (let* ((tag-template (find-document (article-set-tag-template-name article-set)
+                                        (website-templates website)))
+           (template-path (merge-pathnames (template-pathstr tag-template)
+                                           (website-rootpath website))))
       (loop
         :for tag :being :each :hash-key :of tag-table :using (hash-value tagged-article-info-list)
         :for filename := (format nil "~a.html" tag)
@@ -339,7 +350,7 @@
             (push content (website-contents website))
             content)))))
 
-(defun add-article-set (name title content-template tag-template website)
+(defun add-article-set (name title index-template content-template tag-template website)
   (let ((article-set-path (merge-pathnames (make-pathname :directory `(:relative ,name))
                                            (merge-pathnames *asha-dir* (website-rootpath website)))))
     (when (probe-file article-set-path)
@@ -348,6 +359,7 @@
       (error "there is no template: ~s" content-template))
     (let ((article-set (make-article-set :name name
                                          :title title
+                                         :index-template-name index-template
                                          :template-name content-template
                                          :tag-template-name tag-template)))
       (push article-set (website-article-sets website))
