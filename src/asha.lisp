@@ -27,6 +27,7 @@
   (tags nil :type list))
 
 (defstruct (article-set (:include document))
+  (title "" :type string)
   (template-name "" :type string)
   (tag-template-name "" :type string)
   articles)
@@ -327,15 +328,17 @@
             (push content (website-contents website))
             content)))))
 
-(defun add-article-set (name template-name website)
+(defun add-article-set (name title content-template tag-template website)
   (let ((article-set-path (merge-pathnames (make-pathname :directory `(:relative ,name))
                                            (merge-pathnames *asha-dir* (website-rootpath website)))))
     (when (probe-file article-set-path)
       (error "article set ~s already exists" name))
-    (unless (find-document template-name (website-templates website))
-      (error "there is no template: ~s" template-name))
+    (unless (find-document content-template (website-templates website))
+      (error "there is no template: ~s" content-template))
     (let ((article-set (make-article-set :name name
-                                         :template-name template-name)))
+                                         :title title
+                                         :template-name content-template
+                                         :tag-template-name tag-template)))
       (push article-set (website-article-sets website))
       name)))
 
