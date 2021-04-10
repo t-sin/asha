@@ -358,17 +358,18 @@
     (when (and (not (null template-name))
                (null (find-document template-name (website-templates website))))
       (error "there is no template: ~s" template-name))
-    (let ((content (find-document (pathname-name content-path)
+    (let ((content (find-document path
                                   (website-contents website))))
       (if content
           (progn
             (setf (content-updated-at content) (now*))
             content)
-          (let ((content (make-content
-                          :name (pathname-name content-path)
-                          :template-name template-name
-                          :created-at (now*)
-                          :pathstr (enough-namestring content-path (website-rootpath website)))))
+          (let* ((pathstr (enough-namestring path (website-rootpath website)))
+                 (content (make-content
+                           :name pathstr
+                           :template-name template-name
+                           :created-at (now*)
+                           :pathstr pathstr)))
             (push content (website-contents website))
             content)))))
 
