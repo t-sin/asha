@@ -132,7 +132,7 @@
                                :for tag :in (content-tags content)
                                :collect (list :name tag :link (format nil "~a.html" tag)))))
           (case (path-type path)
-            (:html (apply #'djula:render-template* `(,path ,stream ,@website-metadata)))
+            (:html (apply #'djula:render-template* `(,path ,stream ,@website-metadata ,@params)))
             (:md (let* ((document (read-content (read-to-string path)))
                         (html (with-output-to-string (out)
                                 (markdown:markdown (getf document :content) :stream out)))
@@ -294,7 +294,8 @@
                      (args `(,@metadata :article-set-title ,(article-set-title article-set)
                                         :article-info-list ,tagged-article-info-list
                                         :tag ,tag)))
-                (apply #'djula:render-template* `(,template-path ,out ,@args))))))))
+                (apply #'djula:render-template* `(,template-path ,out ,@args))))))
+    article-info-list))
 
 (defun publish-article-set (article-set website directory)
   (let* ((name (document-name article-set))
@@ -319,24 +320,26 @@
               (render-content out content website
                               `(:article-set-title ,(article-set-title article-set)
                                 :prev-article ,prev :next-article ,next))))
-      (publish-tag-pages sorted article-set website path)
-      (values sorted article-link-table))))
+      (publish-tag-pages sorted article-set website path))))
 
 (defun publish-website (website directory)
   (when (probe-file directory)
     (uiop:delete-directory-tree directory :validate t))
-  (loop
-    :for content :in (website-contents website)
-    :for path := (merge-pathnames (content-pathstr content) directory)
-    :for output-path := (determine-output-path path)
-    :do (ensure-directories-exist path)
-    :do (with-open-file (out output-path :direction :output :if-exists :supersede)
-          (render-content out content website)))
-  (loop
-    :for article-set :in (website-article-sets website)
-    :collect (multiple-value-bind (articles link-table)
-                 (publish-article-set article-set website directory)
-               (cons articles link-table))))
+  (let ((article-sets))
+    (loop
+      :for article-set :in (website-article-sets website)
+      :for article-set-info := (publish-article-set article-set website directory)
+      :do (setf (getf article-sets (intern (string-upcase (article-set-name article-set)) :keyword))
+                (list :article-info article-set-info)))
+    (loop
+      :with params := `(:article-set-info-list ,article-sets)
+      :for content :in (website-contents website)
+      :for path := (merge-pathnames (content-pathstr content) directory)
+      :for output-path := (determine-output-path path)
+      :do (ensure-directories-exist path)
+      :do (with-open-file (out output-path :direction :output :if-exists :supersede)
+            (render-content out content website params)))
+    t))
 
 (defun add-template (path website)
   (let ((template-path (merge-pathnames path (website-rootpath website))))
