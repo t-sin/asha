@@ -372,7 +372,7 @@
             (push content (website-contents website))
             content)))))
 
-(defun add-article-set (name title index-template content-template tag-template website)
+(defun add-article-set (name title website &key index-template content-template tag-template)
   (let ((article-set-path (merge-pathnames (make-pathname :directory `(:relative ,name))
                                            (merge-pathnames *asha-dir* (website-rootpath website)))))
     (when (probe-file article-set-path)
