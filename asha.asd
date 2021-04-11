@@ -5,7 +5,7 @@
   :depends-on ("uiop"
                "alexandria"
                "local-time"
-               "cl-markdown"
+               "clcm"
                "djula"
                "closure-html"
                "rosa")
