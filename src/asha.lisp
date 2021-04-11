@@ -87,7 +87,11 @@
                     (rosa:peruse-as-plist in #'string-upcase))))
     (setf (getf document :title) (elt (getf document :title) 0))
     (setf (getf document :description) (elt (getf document :description) 0))
-    (setf (getf document :content) (elt (getf document :content) 0))
+    (setf (getf document :content)
+          (with-output-to-string (out)
+            (loop
+              :for s :across (getf document :content)
+              :do (format out "~a" s))))
     document))
 
 (defun document-newer-p (content document)
