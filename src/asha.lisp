@@ -344,12 +344,12 @@
             (render-content out content website params)))
     t))
 
-(defun add-template (path website)
+(defun add-template (name path website)
   (let ((template-path (merge-pathnames path (website-rootpath website))))
     (unless (probe-file template-path)
       (error "no such directory: ~s" template-path))
     (let ((template (make-template
-                     :name (pathname-name template-path)
+                     :name name
                      :pathstr (enough-namestring template-path (website-rootpath website)))))
       (push template (website-templates website))
       template-path)))
