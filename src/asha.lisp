@@ -1,6 +1,12 @@
 (defpackage :asha
   (:use :cl)
-  (:export :create-website
+  (:export :website-metadata
+           :website
+           :template
+           :content
+           :article-set
+
+           :create-website
            :load-website
            :save-website
            :publish-website
