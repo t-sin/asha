@@ -14,4 +14,5 @@
                 :components ((:file "website")
                              (:file "util")
                              (:file "render")
+                             (:file "operation")
                              (:file "asha")))))
