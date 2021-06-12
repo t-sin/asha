@@ -14,10 +14,14 @@
            :website-templates
            :website-article-sets
 
+           :document
+           :document-name
+
            :template
            :template-pathstr
 
            :content
+           :copy-content
            :content-template-name
            :content-created-at
            :content-updated-at
@@ -25,6 +29,8 @@
            :content-tags
 
            :article-set
+           :make-article-set
+           :article-set-name
            :article-set-title
            :article-set-template-name
            :article-set-tag-template-name
