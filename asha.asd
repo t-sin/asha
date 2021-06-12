@@ -11,4 +11,5 @@
                "rosa")
   :components ((:module "src"
                 :serial t
-                :components ((:file "asha")))))
+                :components ((:file "website")
+                             (:file "asha")))))
