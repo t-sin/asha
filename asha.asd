@@ -12,4 +12,5 @@
   :components ((:module "src"
                 :serial t
                 :components ((:file "website")
+                             (:file "util")
                              (:file "asha")))))

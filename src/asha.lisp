@@ -1,6 +1,7 @@
 (defpackage :asha
   (:use :cl
-        :asha.website)
+        :asha.website
+        :asha.util)
   (:export :website-metadata
            :website
            :template
@@ -17,60 +18,7 @@
            :add-article))
 (in-package :asha)
 
-;;; utilities
-
-(defun determine-rootpath (path)
-  path)
-
-(defun list-directories (path)
-  (directory (merge-pathnames (make-pathname :directory (list :relative :wild))
-                              path)))
-
-(defun path-type (path)
-  (intern (string-upcase (pathname-type path)) :keyword))
-
-(defun determine-output-path (path)
-  (case (path-type path)
-    (:md (make-pathname :directory (pathname-directory path)
-                        :name (pathname-name path)
-                        :type "html"))
-    (t path)))
-
-(defun read-to-string (path)
-  (with-output-to-string (out)
-    (with-open-file (in path :direction :input)
-      (loop
-        :for line := (read-line in nil :eof)
-        :until (eq line :eof)
-        :do (write-line line out)))))
-
-(defun make-index (htmlstr)
-  (labels ((find-body (html)
-             (if (eq (first html) :body)
-                 html
-                 (find-if #'find-body (rest html))))
-           (make-index (elements)
-             (loop
-               :with headers := (loop
-                                  :for n :from 0 :upto 9
-                                  :collect (intern (format nil "H~d" n) :keyword))
-               :for e :in elements
-               :when (and (consp e) (member (first e) headers))
-               :collect e)))
-    (let ((html (chtml:parse htmlstr (chtml:make-lhtml-builder))))
-      (make-index (rest (find-body html))))))
-
-(defun read-content (str)
-  (let ((document (with-input-from-string (in str)
-                    (rosa:peruse-as-plist in #'string-upcase))))
-    (setf (getf document :title) (elt (getf document :title) 0))
-    (setf (getf document :description) (elt (getf document :description) 0))
-    (setf (getf document :content)
-          (with-output-to-string (out)
-            (loop
-              :for s :across (getf document :content)
-              :do (format out "~a" s))))
-    document))
+;;; primitive operations
 
 (defun document-newer-p (content document)
   (let ((content-updated-at (content-updated-at content))
@@ -84,10 +32,17 @@
             (local-time:timestamp< (local-time:parse-timestring content-updated-at)
                                    (local-time:parse-timestring document-updated-at))))))
 
-(defun now* ()
-  (local-time:format-timestring nil (local-time:now)))
-
-;;; primitive operations
+(defun read-content (str)
+  (let ((document (with-input-from-string (in str)
+                    (rosa:peruse-as-plist in #'string-upcase))))
+    (setf (getf document :title) (elt (getf document :title) 0))
+    (setf (getf document :description) (elt (getf document :description) 0))
+    (setf (getf document :content)
+          (with-output-to-string (out)
+            (loop
+              :for s :across (getf document :content)
+              :do (format out "~a" s))))
+    document))
 
 (defun find-document (name lis)
   (find name lis
@@ -344,13 +299,13 @@
                                   (website-contents website))))
       (if content
           (progn
-            (setf (content-updated-at content) (now*))
+            (setf (content-updated-at content) (now))
             content)
           (let* ((pathstr (enough-namestring path (website-rootpath website)))
                  (content (make-content
                            :name pathstr
                            :template-name template-name
-                           :created-at (now*)
+                           :created-at (now)
                            :pathstr pathstr)))
             (push content (website-contents website))
             content)))))
@@ -384,12 +339,12 @@
             (let* ((document (read-document (merge-pathnames (content-pathstr content)
                                                              (website-rootpath website))))
                    (tags (coerce (getf document :tags) 'list)))
-              (setf (content-updated-at content) (now*)
+              (setf (content-updated-at content) (now)
                     (content-tags content) tags)
               content)
             (let* ((tags (coerce (getf (read-document article-path) :tags) 'list))
                    (article (make-content :name (pathname-name article-path)
-                                          :created-at (now*)
+                                          :created-at (now)
                                           :tags tags
                                           :pathstr (enough-namestring article-path (website-rootpath website)))))
               (push article (article-set-articles article-set))
