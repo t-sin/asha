@@ -13,4 +13,5 @@
                 :serial t
                 :components ((:file "website")
                              (:file "util")
+                             (:file "render")
                              (:file "asha")))))
