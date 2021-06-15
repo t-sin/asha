@@ -245,9 +245,9 @@
       (push article-set (website-article-sets website))
       name)))
 
-(defun add-article (path document-name website)
+(defun add-article (path article-set-name website)
   (let* ((article-path (merge-pathnames path (website-rootpath website)))
-         (article-set (find document-name (website-article-sets website)
+         (article-set (find article-set-name (website-article-sets website)
                             :key #'document-name :test #'string=)))
     (unless (probe-file article-path)
       (error "no such file: ~s" article-path))
