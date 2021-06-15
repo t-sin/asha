@@ -21,6 +21,7 @@
            :template-pathstr
 
            :content
+           :make-content
            :copy-content
            :content-template-name
            :content-created-at
