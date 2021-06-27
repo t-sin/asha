@@ -14,47 +14,68 @@ exec ros -Q -- $0 "$@"
 (in-package :ros.script.asha.3833762159)
 
 (defun print-help ()
-  (format t "help message here~%"))
+  (format t "
+Asha - Static site generator management command
+
+asha COMMAND [OPTION...]
+
+COMMAND:
+    init PATH                   Initialize website with PATH.
+    publish PATH                Generate output HTML files into PATH.
+    add TYPE [OPTION...]        Add document as TYPE.
+        add template
+        add content
+        add article-set
+        add article
+    help                        Print this usege.
+"))
+
+(defun init-website (&rest argv)
+  (let ((dir (second argv)))
+    (unless dir
+      (format t "ERROR: specify directory.~%")
+      (return-from init-website))
+    (let ((asha-dir (merge-pathnames ".asha/"
+                                     (uiop:ensure-directory-pathname (second argv)))))
+      (ensure-directories-exist asha-dir)
+      (let ((website (asha:create-website dir)))
+        (asha:save-website website)))))
+
+(defun publish-website (cwd &rest argv)
+  (let ((website (asha:load-website cwd))
+        (outdir (uiop:ensure-directory-pathname (second argv))))
+    (ensure-directories-exist outdir)
+    (asha:publish-website website outdir)))
+
+(defun add-something-to-website (cwd &rest argv)
+  (unless (uiop:directory-exists-p (merge-pathnames ".asha/" cwd))
+    (format t "")
+    (return-from add-something-to-website))
+  (let ((subcommand (first argv))
+        (website (asha:load-website cwd)))
+    (when (null subcommand)
+      (format t "ERROR: specify TYPE.~%")
+      (print-help))
+    (string-case (subcommand)
+      ("template" (asha:add-template (second argv) (third argv) website))
+      ("content" (asha:add-content (second argv) (third argv) website))
+      ;; ("article-set" (asha:add-article-set ))
+      ;; ("article" (asha::add-article )))))
+      (t (format t "unknown type ~s with args ~s~%" subcommand (rest argv))))
+    (asha:save-website website)))
 
 (defun main (&rest argv)
   (declare (ignorable argv))
   (let* ((subcommand (first argv))
          (cwd (uiop:getcwd)))
-    (format t "current working directory: ~s~%" cwd)
-
     (when (null subcommand)
+      (format t "ERROR: specify COMMAND.~%")
       (print-help)
       (return-from main))
-
     (string-case (subcommand)
-      ("init"
-       (let ((dir (second argv)))
-         (unless dir
-           (format t "specify directory.~%")
-           (return-from main))
-         (ensure-directories-exist (merge-pathnames ".asha/"
-                                                    (uiop:ensure-directory-pathname (second argv))))
-         (let ((website (asha:create-website dir)))
-           (asha:save-website website))))
-
-      ("publish"
-       (let ((website (asha:load-website cwd))
-             (outdir (uiop:ensure-directory-pathname (second argv))))
-         (ensure-directories-exist outdir)
-         (asha:publish-website website outdir)))
-
-      ("add"
-       (ensure-directories-exist (merge-pathnames ".asha/" cwd))
-       (let ((subsubcommand (second argv))
-             (website (asha:load-website cwd)))
-         (string-case (subsubcommand)
-           ("template" (asha:add-template (third argv) (fourth argv) website))
-           ("content" (asha:add-content (third argv) (fourth argv) website)))
-           ;; ("article-set" (asha:add-article-set ))
-           ;; ("article" (asha::add-article )))))
-         (asha:save-website website)))
-
+      ("init" (init-website (rest argv)))
+      ("publish" (publish-website cwd (rest argv)))
+      ("add" (add-something-to-website cwd (rest argv)))
       ("help" (print-help))
-
-      (t (format t "argv: ~s~%" argv)))))
+      (t (format t "ERROR: unknown command ~s with args ~s~%" subcommand (rest argv))))))
 ;;; vim: set ft=lisp lisp:
