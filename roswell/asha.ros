@@ -1,0 +1,60 @@
+#!/bin/sh
+#|-*- mode:lisp -*-|#
+#|
+exec ros -Q -- $0 "$@"
+|#
+(progn ;;init forms
+  (ros:ensure-asdf)
+  #+quicklisp(ql:quickload '(:asha :uiop :string-case) :silent t)
+  )
+
+(defpackage :ros.script.asha.3833762159
+  (:use :cl
+        :string-case))
+(in-package :ros.script.asha.3833762159)
+
+(defun print-help ()
+  (format t "help message here~%"))
+
+(defun main (&rest argv)
+  (declare (ignorable argv))
+  (let* ((subcommand (first argv))
+         (cwd (uiop:getcwd)))
+    (format t "current working directory: ~s~%" cwd)
+
+    (when (null subcommand)
+      (print-help)
+      (return-from main))
+
+    (string-case (subcommand)
+      ("init"
+       (let ((dir (second argv)))
+         (unless dir
+           (format t "specify directory.~%")
+           (return-from main))
+         (ensure-directories-exist (merge-pathnames ".asha/"
+                                                    (uiop:ensure-directory-pathname (second argv))))
+         (let ((website (asha:create-website dir)))
+           (asha:save-website website))))
+
+      ("publish"
+       (let ((website (asha:load-website cwd))
+             (outdir (uiop:ensure-directory-pathname (second argv))))
+         (ensure-directories-exist outdir)
+         (asha:publish-website website outdir)))
+
+      ("add"
+       (ensure-directories-exist (merge-pathnames ".asha/" cwd))
+       (let ((subsubcommand (second argv))
+             (website (asha:load-website cwd)))
+         (string-case (subsubcommand)
+           ("template" (asha:add-template (third argv) (fourth argv) website))
+           ("content" (asha:add-content (third argv) (fourth argv) website)))
+           ;; ("article-set" (asha:add-article-set ))
+           ;; ("article" (asha::add-article )))))
+         (asha:save-website website)))
+
+      ("help" (print-help))
+
+      (t (format t "argv: ~s~%" argv)))))
+;;; vim: set ft=lisp lisp:
