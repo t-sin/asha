@@ -6,6 +6,15 @@
 
 One purpose of *asha* is to show how to construct domain-specific language with Common Lisp, or to show how to write a system with Common Lisp. Another is simply I use this.
 
+## Prerequiesties
+
+This project depends on `clcm` and `rosa` out of quicklisp. To install these, type like this:
+
+```
+ros install myaosato/clcm
+ros install t-sin/rosa
+```
+
 ## Installation
 
 Put this repository into your ASDF path.
