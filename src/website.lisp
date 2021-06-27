@@ -18,6 +18,7 @@
            :document-name
 
            :template
+           :make-template
            :template-pathstr
 
            :content
