@@ -163,7 +163,7 @@
            (sorted (sort articles (lambda (a b)
                                     (let ((a (local-time:parse-timestring (content-created-at a)))
                                           (b (local-time:parse-timestring (content-created-at b))))
-                                      (local-time:timestamp< a b)))))
+                                      (local-time:timestamp> a b)))))
            (article-link-table (collect-page-links sorted website)))
       (loop
         :for content :in sorted
