@@ -43,7 +43,7 @@ COMMAND:
 
 (defun publish-website (cwd &rest argv)
   (let ((website (asha:load-website cwd))
-        (outdir (uiop:ensure-directory-pathname (second argv))))
+        (outdir (uiop:ensure-directory-pathname (first argv))))
     (ensure-directories-exist outdir)
     (asha:publish-website website outdir)))
 
@@ -73,9 +73,9 @@ COMMAND:
       (print-help)
       (return-from main))
     (string-case (subcommand)
-      ("init" (init-website (rest argv)))
-      ("publish" (publish-website cwd (rest argv)))
-      ("add" (add-something-to-website cwd (rest argv)))
+      ("init" (apply #'init-website (rest argv)))
+      ("publish" (apply #'publish-website cwd (rest argv)))
+      ("add" (apply #'add-something-to-website cwd (rest argv)))
       ("help" (print-help))
       (t (format t "ERROR: unknown command ~s with args ~s~%" subcommand (rest argv))))))
 ;;; vim: set ft=lisp lisp:
