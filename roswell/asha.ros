@@ -48,6 +48,21 @@ COMMAND:
     (ensure-directories-exist outdir)
     (asha:publish-website website outdir)))
 
+(defun remove-dot-slash (path)
+  (if (alexandria:starts-with-subseq "./" path)
+      (subseq path 2)
+      path))
+
+(defun add-template-to-website (website &rest argv)
+  (let* ((name (first argv))
+         (path (remove-dot-slash (second argv))))
+    (asha:add-template name path website)))
+
+(defun add-content-to-website (website &rest argv)
+  (let* ((path (remove-dot-slash (first argv)))
+         (template-name (second argv)))
+    (asha:add-content path template-name website)))
+
 (defun add-article-set-to-website (website &rest argv)
   (let* ((article-set-dir (uiop:ensure-directory-pathname (first argv)))
          (article-set-name (car (last (pathname-directory article-set-dir))))
@@ -71,9 +86,9 @@ COMMAND:
       (print-help))
     (unwind-protect
          (string-case (subcommand)
-                      ("template" (asha:add-template (second argv) (third argv) website))
-                      ("content" (asha:add-content (second argv) (third argv) website))
-                      ("article-set" (add-article-set-to-website website (rest argv)))
+                      ("template" (apply #'add-template-to-website website (rest argv)))
+                      ("content" (apply #'add-content-to-website website (rest argv)))
+                      ("article-set" (apply #'add-article-set-to-website website (rest argv)))
                       ;; ("article" (asha::add-article )))))
                       (t (format t "unknown type ~s with args ~s~%" subcommand (rest argv))))
       (asha:save-website website))))
