@@ -20,14 +20,15 @@ Asha - Static site generator management command
 asha COMMAND [OPTION...]
 
 COMMAND:
-    init PATH                      Initialize website with PATH.
-    publish PATH                   Generate output HTML files into PATH.
-    add TYPE [OPTION...]           Add document as TYPE.
-        template NAME PATH         Add template file.
-        content PATH TEMPLATE      Add content file using TEMPLATE as template.
-        article-set
+    init PATH                                    Initialize website with PATH.
+    publish PATH                                 Generate output HTML files into PATH.
+    add TYPE [ARG...]                            Add document as TYPE.
+        template NAME PATH                       Add a template file.
+        content PATH TEMPLATE                    Add a content file using TEMPLATE as template.
+        article-set DIR NAME TAGTMP TOPTMP ATMP  Add an article set with NAME. TAGTMP for tags,
+                                                 TOPTMP for index and ATMP for each articles.
         article
-    help                           Print this usege.
+    help                                           Print this usege.
 "))
 
 (defun init-website (&rest argv)
@@ -47,6 +48,18 @@ COMMAND:
     (ensure-directories-exist outdir)
     (asha:publish-website website outdir)))
 
+(defun add-article-set-to-website (website &rest argv)
+  (let* ((article-set-dir (uiop:ensure-directory-pathname (first argv)))
+         (article-set-name (car (last (pathname-directory article-set-dir))))
+         (name (second argv))
+         (tag-template (third argv))
+         (index-template (fourth argv))
+         (article-template (fifth argv)))
+    (asha:add-article-set article-set-name name website
+                               :content-template article-template
+                               :index-template index-template
+                               :tag-template tag-template)))
+
 (defun add-something-to-website (cwd &rest argv)
   (unless (uiop:directory-exists-p (merge-pathnames ".asha/" cwd))
     (format t "")
@@ -56,13 +69,14 @@ COMMAND:
     (when (null subcommand)
       (format t "ERROR: specify TYPE.~%")
       (print-help))
-    (string-case (subcommand)
-      ("template" (asha:add-template (second argv) (third argv) website))
-      ("content" (asha:add-content (second argv) (third argv) website))
-      ;; ("article-set" (asha:add-article-set ))
-      ;; ("article" (asha::add-article )))))
-      (t (format t "unknown type ~s with args ~s~%" subcommand (rest argv))))
-    (asha:save-website website)))
+    (unwind-protect
+         (string-case (subcommand)
+                      ("template" (asha:add-template (second argv) (third argv) website))
+                      ("content" (asha:add-content (second argv) (third argv) website))
+                      ("article-set" (add-article-set-to-website website (rest argv)))
+                      ;; ("article" (asha::add-article )))))
+                      (t (format t "unknown type ~s with args ~s~%" subcommand (rest argv))))
+      (asha:save-website website))))
 
 (defun main (&rest argv)
   (declare (ignorable argv))
