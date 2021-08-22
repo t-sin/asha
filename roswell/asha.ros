@@ -75,6 +75,11 @@ COMMAND:
                                :index-template index-template
                                :tag-template tag-template)))
 
+(defun add-article-to-website (website &rest argv)
+  (let* ((path (remove-dot-slash (first argv)))
+         (article-set-name (car (last (pathname-directory (truename path))))))
+    (asha:add-article path article-set-name website)))
+
 (defun add-something-to-website (cwd &rest argv)
   (unless (uiop:directory-exists-p (merge-pathnames ".asha/" cwd))
     (format t "")
@@ -89,7 +94,7 @@ COMMAND:
                       ("template" (apply #'add-template-to-website website (rest argv)))
                       ("content" (apply #'add-content-to-website website (rest argv)))
                       ("article-set" (apply #'add-article-set-to-website website (rest argv)))
-                      ;; ("article" (asha::add-article )))))
+                      ("article" (apply #'add-article-to-website website (rest argv)))
                       (t (format t "unknown type ~s with args ~s~%" subcommand (rest argv))))
       (asha:save-website website))))
 
