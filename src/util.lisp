@@ -9,9 +9,6 @@
            :now))
 (in-package :asha.util)
 
-(defun determine-rootpath (path)
-  path)
-
 (defun list-directories (path)
   (directory (merge-pathnames (make-pathname :directory (list :relative :wild))
                               path)))
