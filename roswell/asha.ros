@@ -31,12 +31,12 @@ COMMAND:
 "))
 
 (defun init-website (&rest argv)
-  (let ((dir (second argv)))
+  (let ((dir (first argv)))
     (unless dir
       (format t "ERROR: specify directory.~%")
       (return-from init-website))
     (let ((asha-dir (merge-pathnames ".asha/"
-                                     (uiop:ensure-directory-pathname (second argv)))))
+                                     (uiop:ensure-directory-pathname dir))))
       (ensure-directories-exist asha-dir)
       (let ((website (asha:create-website dir)))
         (asha:save-website website)))))
