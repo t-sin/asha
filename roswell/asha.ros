@@ -24,11 +24,11 @@ COMMAND:
     publish PATH                                 Generate output HTML files into PATH.
     add TYPE [ARG...]                            Add document as TYPE.
         template NAME PATH                       Add a template file.
-        content PATH TEMPLATE                    Add a content file using TEMPLATE as template.
+        content PATH TEMPNAME                    Add a content file using TEMPNAME as template.
         article-set DIR NAME TAGTMP TOPTMP ATMP  Add an article set with NAME. TAGTMP for tags,
                                                  TOPTMP for index and ATMP for each articles.
-        article
-    help                                           Print this usege.
+        article PATH                             Add a file PATH as an article.
+    help                                         Print this usege.
 "))
 
 (defun init-website (&rest argv)
